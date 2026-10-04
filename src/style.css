@@ -22,6 +22,14 @@ html {
     -apple-system,
     'PingFang SC',
     sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 body {
   margin: 0;
@@ -814,9 +822,6 @@ b {
   gap: 14px;
   padding: 22px 12px;
   touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
   overflow: hidden;
 }
 .timer-pad:hover:not(:disabled) {
