@@ -34,8 +34,17 @@ export function Stats({
   const completed = room.history.filter(roundDone).length;
   const showSession = personal || view === 'session' || room.phase === 'finished';
   const doneCount = current?.solves.filter((s) => s.status === 'done').length ?? 0;
+  // The Me tab is all about you, so its accent becomes your player color.
+  const me = roster.get(playerId);
+  const accent =
+    personal && me
+      ? ({
+          '--accent': `var(--p${me.color})`,
+          '--on-accent': `var(--on-p${me.color})`,
+        } as CSSProperties)
+      : undefined;
   return (
-    <div className="stats-content">
+    <div className="stats-content" style={accent}>
       {!personal && room.phase !== 'finished' && (
         <div className="segmented battle-switch">
           <Thumb index={view === 'session' ? 1 : 0} count={2} pad={4} gap={4} />
