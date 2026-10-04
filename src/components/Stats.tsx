@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Check, Crown, Eye, LogOut, WifiOff } from 'lucide-react';
 import type { Player, RoomState, Solve } from '../../shared/protocol';
 import { currentRound, roundDone } from '../../shared/protocol';
@@ -8,10 +8,13 @@ export function Stats({
   room,
   playerId,
   view,
+  action,
 }: {
   room: RoomState;
   playerId: string;
   view: 'stats' | 'round' | 'standings';
+  // Leads the round view, e.g. the host's "Next round" once everyone is done.
+  action?: ReactNode;
 }) {
   const personal = view === 'stats';
   const current = currentRound(room);
@@ -54,6 +57,7 @@ export function Stats({
       )}
       {view === 'round' && current && (
         <>
+          {action}
           <section className="round-progress" aria-label="Round progress">
             <small>Done</small>
             <div className="round-tally mono">

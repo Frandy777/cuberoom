@@ -111,6 +111,36 @@ function Badge({ done, total }: { done: number; total: number }) {
     </span>
   );
 }
+// Tells the host on the timer that everyone's done, so the next round is one tap away.
+function RoundReady({
+  round,
+  label,
+  disabled,
+  onNext,
+  onClose,
+}: {
+  round: number;
+  label: string;
+  disabled: boolean;
+  onNext: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="round-ready" role="status" data-closing={useExiting() || undefined}>
+      <div>
+        <small>Round {round}</small>
+        <strong>All done</strong>
+      </div>
+      <button className="round-ready-next" disabled={disabled} onClick={onNext}>
+        {label}
+        <ArrowRight size={18} />
+      </button>
+      <button className="round-ready-close" aria-label="Dismiss" onClick={onClose}>
+        <X size={20} />
+      </button>
+    </div>
+  );
+}
 function Toast({ text }: { text: string }) {
   return (
     <div className="toast" role="status" data-closing={useExiting() || undefined}>
@@ -178,6 +208,14 @@ export default function App() {
   const host = room?.hostId === session?.playerId;
   const allDone = roundDone(round);
   const connected = status === 'connected';
+  const canAdvance = host && connected && !busy && !!room && room.players.every((p) => p.connected);
+  const nextLabel = busy
+    ? 'Generating…'
+    : room?.rounds && room.history.length >= room.rounds
+      ? 'Finish session'
+      : 'Next round';
+  // The round whose ready prompt the host closed; a new round brings it back.
+  const [dismissed, setDismissed] = useState<number>();
   const view = game.connecting
     ? 'connecting'
     : page === 'create' || (page === 'settings' && room)
@@ -554,24 +592,23 @@ export default function App() {
           visible={tab === 'timer'}
           active={tab === 'timer' && !menu && !confirm && !editProfile && !needRefresh}
         />
-        {tab !== 'timer' && <Stats room={room} playerId={session!.playerId} view={tab} />}
-        {tab === 'timer' && allDone && room.phase !== 'finished' && (
-          <div className="next-round">
-            <button
-              className="primary"
-              disabled={!host || !connected || busy || room.players.some((p) => !p.connected)}
-              onClick={advance}
-            >
-              {busy
-                ? 'Generating…'
-                : host
-                  ? room.rounds && room.history.length >= room.rounds
-                    ? 'Finish session'
-                    : 'Next round'
-                  : 'Waiting for host'}
-              {host && <ArrowRight size={19} />}
-            </button>
-          </div>
+        {tab !== 'timer' && (
+          <Stats
+            room={room}
+            playerId={session!.playerId}
+            view={tab}
+            action={
+              allDone &&
+              room.phase !== 'finished' && (
+                <div className="next-round">
+                  <button className="primary" disabled={!canAdvance} onClick={advance}>
+                    {host ? nextLabel : 'Waiting for host'}
+                    {host && <ArrowRight size={26} />}
+                  </button>
+                </div>
+              )
+            }
+          />
         )}
         <nav className="room-nav" aria-label="Room">
           <Thumb
@@ -639,6 +676,22 @@ export default function App() {
         </div>
       )}
       <Presence ms={400}>{toast && <Toast text={toast} />}</Presence>
+      <Presence>
+        {host &&
+          tab === 'timer' &&
+          allDone &&
+          room?.phase !== 'finished' &&
+          round &&
+          dismissed !== round.number && (
+            <RoundReady
+              round={round.number}
+              label={nextLabel}
+              disabled={!canAdvance}
+              onNext={advance}
+              onClose={() => setDismissed(round.number)}
+            />
+          )}
+      </Presence>
       <Presence>
         {menu && room && (
           <Modal onClose={() => setMenu(false)}>

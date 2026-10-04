@@ -1027,8 +1027,10 @@ b {
     transform 250ms var(--ease-out);
 }
 .next-round .primary {
-  min-height: 52px;
-  font-size: 15px;
+  min-height: 120px;
+  border-radius: 28px;
+  font-size: 26px;
+  letter-spacing: -0.02em;
 }
 .room-nav {
   position: sticky;
@@ -1393,6 +1395,70 @@ b {
   opacity: 0;
   transform: translateY(-100%);
 }
+.round-ready {
+  position: fixed;
+  z-index: 10;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  max-width: 438px;
+  margin: 0 auto;
+  transition:
+    opacity 250ms var(--ease-out),
+    transform 250ms var(--ease-out);
+  padding: 14px 12px 14px 24px;
+  background: var(--hero);
+  color: var(--on-hero);
+  border-radius: 32px;
+  box-shadow: 0 4px 30px #0003;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.round-ready[data-closing] {
+  opacity: 0;
+  transform: translateY(calc(-100% - 16px));
+  pointer-events: none;
+}
+.round-ready > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.round-ready small {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--hero-muted);
+}
+.round-ready strong {
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.round-ready-next {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: var(--on-hero);
+  color: var(--hero);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.round-ready-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--hero-muted);
+}
 /* Announces a new round: a circle wipes out from the center, holds, then wipes back.
    Purely decorative over the page, so it never takes input or changes the tab. */
 .round-splash {
@@ -1584,18 +1650,20 @@ b {
   color: var(--muted);
 }
 .round-progress {
-  background: var(--hero);
-  color: var(--on-hero);
+  background: var(--surface);
+  color: var(--text);
   border-radius: 28px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 16px;
 }
 .round-progress small {
+  grid-column: 1 / -1;
   font-size: 14px;
   font-weight: 800;
-  color: var(--hero-muted);
+  color: var(--muted);
 }
 .round-tally {
   display: flex;
@@ -1604,13 +1672,13 @@ b {
   font-weight: 800;
 }
 .round-tally strong {
-  font-size: 88px;
+  font-size: 44px;
   line-height: 1;
   letter-spacing: -0.05em;
 }
 .round-tally span {
-  font-size: 32px;
-  color: var(--hero-muted);
+  font-size: 20px;
+  color: var(--muted);
 }
 .round-bars {
   display: grid;
@@ -1620,14 +1688,14 @@ b {
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--hero-muted) 35%, transparent);
+  background: var(--track);
 }
 .round-bars i::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--on-hero);
+  background: var(--text);
   clip-path: inset(0 100% 0 0);
   transition: clip-path 300ms var(--ease-out);
 }
@@ -1896,6 +1964,10 @@ b {
     opacity: 0;
     transform: translateY(-100%);
   }
+  .round-ready {
+    opacity: 0;
+    transform: translateY(calc(-100% - 16px));
+  }
   .error-banner,
   .connection-banner {
     opacity: 0;
@@ -1926,7 +1998,8 @@ b {
     transition-duration: 200ms;
     transition-timing-function: ease;
   }
-  .toast[data-closing] {
+  .toast[data-closing],
+  .round-ready[data-closing] {
     transform: none;
   }
   .round-splash {
@@ -1958,6 +2031,7 @@ b {
   }
   @starting-style {
     .toast,
+    .round-ready,
     .error-banner,
     .connection-banner,
     .next-round,
