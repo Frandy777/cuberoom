@@ -265,25 +265,21 @@ b {
 /* Pages about you (Timer, Me) swap the UI accent for your player color. */
 [data-accent='1'] {
   --accent: var(--p1);
-  --accent-track: var(--track-p1);
   --on-accent: var(--on-p1);
   --on-thumb: var(--on-thumb-p1);
 }
 [data-accent='2'] {
   --accent: var(--p2);
-  --accent-track: var(--track-p2);
   --on-accent: var(--on-p2);
   --on-thumb: var(--on-thumb-p2);
 }
 [data-accent='3'] {
   --accent: var(--p3);
-  --accent-track: var(--track-p3);
   --on-accent: var(--on-p3);
   --on-thumb: var(--on-thumb-p3);
 }
 [data-accent='4'] {
   --accent: var(--p4);
-  --accent-track: var(--track-p4);
   --on-accent: var(--on-p4);
   --on-thumb: var(--on-thumb-p4);
 }
@@ -580,7 +576,6 @@ b {
   display: flex;
   gap: 4px;
   border-radius: 24px;
-  background: var(--accent-track);
   padding: 4px;
 }
 .segmented button {
@@ -1006,7 +1001,6 @@ b {
   position: relative;
   display: flex;
   gap: 6px;
-  background: var(--accent-track);
   border-radius: 22px;
   padding: 6px;
 }

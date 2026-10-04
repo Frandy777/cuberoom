@@ -3,9 +3,9 @@
  * UI chrome uses a single --accent plus the state colors, none of which may
  * share a hue with a player color.
  * A segmented track steps away from the color of the thumb sliding on it: lighter
- * under a dark thumb, darker under a light one. --accent-track and --track-pN back
- * thumbs drawn in --on-accent / --on-pN; --on-thumb(-pN) labels that thumb in
- * the opposite neutral, never the accent itself.
+ * under a dark thumb, darker under a light one. On accent cards the thumb, drawn in
+ * --on-accent / --on-pN, sits on the card with no track; --on-thumb(-pN) labels it
+ * in the opposite neutral, never the accent itself.
  */
 .t-classic {
   --bg: #f0eeea;
@@ -24,22 +24,17 @@
   --on-btn: #ffffff;
   --p1: #6b3cf0;
   --on-p1: #ffffff;
-  --track-p1: color-mix(in oklab, var(--p1), black 12%);
   --on-thumb-p1: #1a1816;
   --p2: #d61f74;
   --on-p2: #ffffff;
-  --track-p2: color-mix(in oklab, var(--p2), black 12%);
   --on-thumb-p2: #1a1816;
   --p3: #c8f04b;
   --on-p3: #1a1816;
-  --track-p3: color-mix(in oklab, var(--p3), white 22%);
   --on-thumb-p3: #ffffff;
   --p4: #3fd8f0;
   --on-p4: #1a1816;
-  --track-p4: color-mix(in oklab, var(--p4), white 22%);
   --on-thumb-p4: #ffffff;
   --accent: #1d3a9e;
-  --accent-track: #172f82;
   --on-accent: #ffffff;
   --on-thumb: #1a1816;
   --tag: #ffdcd9;
@@ -71,22 +66,17 @@
   --on-btn: #12130f;
   --p1: #e4ff3a;
   --on-p1: #12130f;
-  --track-p1: color-mix(in oklab, var(--p1), white 22%);
   --on-thumb-p1: #ffffff;
   --p2: #ec3a3f;
   --on-p2: #ffffff;
-  --track-p2: color-mix(in oklab, var(--p2), black 12%);
   --on-thumb-p2: #12130f;
   --p3: #8b45e8;
   --on-p3: #ffffff;
-  --track-p3: color-mix(in oklab, var(--p3), black 12%);
   --on-thumb-p3: #12130f;
   --p4: #2f6bf5;
   --on-p4: #ffffff;
-  --track-p4: color-mix(in oklab, var(--p4), black 12%);
   --on-thumb-p4: #12130f;
   --accent: #d9ccff;
-  --accent-track: color-mix(in oklab, var(--accent), white 22%);
   --on-accent: #12130f;
   --on-thumb: #ffffff;
   --tag: #ff9330;
