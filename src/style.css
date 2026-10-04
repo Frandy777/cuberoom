@@ -1074,8 +1074,9 @@ b {
 }
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 8px;
+  text-align: center;
 }
 .metrics small {
   display: block;
@@ -1085,46 +1086,9 @@ b {
 .metrics strong {
   display: block;
   font:
-    800 18px JetBrains,
+    800 16px JetBrains,
     monospace;
   margin-top: 5px;
-}
-.table-scroll {
-  overflow: auto;
-  margin-top: 12px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  white-space: nowrap;
-  font:
-    500 11px JetBrains,
-    monospace;
-}
-th,
-td {
-  padding: 12px 3px;
-  border-top: 1px solid var(--bg);
-}
-thead th {
-  font:
-    700 11px Bricolage,
-    system-ui,
-    sans-serif;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-tbody th {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-}
-.winner {
-  padding: 6px;
-  border-radius: 9px;
-  font-weight: 800;
 }
 .pulse {
   animation: pulse 1s infinite alternate;
@@ -1293,9 +1257,6 @@ tbody th {
   .room-header h2 {
     font-size: 15px;
   }
-  .metrics strong {
-    font-size: 16px;
-  }
   .timer-value {
     font-size: 18vw;
   }
@@ -1432,16 +1393,6 @@ tbody th {
 .wins-summary strong {
   flex: 1;
 }
-.metrics {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px 8px;
-}
-.metrics strong {
-  font-size: 16px;
-}
-.history .table-scroll {
-  margin-top: 0;
-}
 .profile-editor .color-picker {
   gap: 4px;
 }
@@ -1514,5 +1465,42 @@ tbody th {
 }
 .solve-row .solving {
   flex-shrink: 0;
+  color: var(--solving);
+}
+.log-head {
+  min-height: 0;
+  background: none;
+}
+.log-head .solve-round {
+  height: 0;
+  background: none;
+}
+.log-cells {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+.log-head .avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+.log-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.log-cell strong {
+  font-size: 16px;
+  white-space: nowrap;
+}
+.log-cell .winner {
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+.log-cell .solving {
   color: var(--solving);
 }

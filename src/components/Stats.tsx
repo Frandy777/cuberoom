@@ -176,43 +176,7 @@ export function Stats({
             </>
           )}
           {personal && <SolveLog room={room} player={players.find((p) => p.id === playerId)} />}
-          {!personal && (
-            <section className="card history">
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Round</th>
-                      {players.map((p) => (
-                        <th key={p.id}>{p.id === playerId ? 'You' : p.name}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...room.history].reverse().map((r) => (
-                      <tr key={r.number}>
-                        <th>R{r.number}</th>
-                        {players.map((p) => {
-                          const solve = r.solves.find((s) => s.playerId === p.id);
-                          return (
-                            <td key={p.id}>
-                              <span
-                                className={
-                                  winners(r).includes(p.id) ? `winner color-${p.color}` : ''
-                                }
-                              >
-                                {solveTime(solve)}
-                              </span>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
+          {!personal && <RoundLog room={room} players={players} playerId={playerId} />}
         </>
       )}
     </div>
@@ -259,6 +223,71 @@ function SolveLog({ room, player }: { room: RoomState; player?: { id: string; co
                 {s.status === 'done' ? time(value(s)) : '—'}
               </strong>
             )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function RoundLog({
+  room,
+  players,
+  playerId,
+}: {
+  room: RoomState;
+  players: { id: string; name: string; color: number }[];
+  playerId: string;
+}) {
+  if (!room.history.length || !players.length) return null;
+  const columns = { gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` };
+  return (
+    <section className="solve-log" aria-label="Round results">
+      <div className="section-heading">
+        <b>Rounds</b>
+      </div>
+      <div className="solve-row log-head">
+        <span className="solve-round" aria-hidden />
+        <div className="log-cells" style={columns}>
+          {players.map((p) => (
+            <span
+              key={p.id}
+              className={`avatar color-${p.color}`}
+              title={p.id === playerId ? 'You' : p.name}
+              aria-label={p.id === playerId ? 'You' : p.name}
+            >
+              {p.name[0]}
+            </span>
+          ))}
+        </div>
+      </div>
+      {[...room.history].reverse().map((r) => {
+        const won = winners(r);
+        return (
+          <div className="solve-row" key={r.number}>
+            <span className="solve-round mono" aria-label={`Round ${r.number}`}>
+              {r.number}
+            </span>
+            <div className="log-cells" style={columns}>
+              {players.map((p) => {
+                const solve = r.solves.find((s) => s.playerId === p.id);
+                return (
+                  <span key={p.id} className="log-cell">
+                    {solve?.status === 'solving' ? (
+                      <SpinnerArc className="solving" size={18} aria-label="Solving" />
+                    ) : (
+                      <strong
+                        className={`mono ${won.includes(p.id) ? `winner color-${p.color}` : ''} ${
+                          solve?.status === 'done' ? '' : 'faint'
+                        }`}
+                      >
+                        {solveTime(solve)}
+                      </strong>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         );
       })}
