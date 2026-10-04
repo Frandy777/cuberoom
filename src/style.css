@@ -262,6 +262,27 @@ b {
   --player: var(--p4);
   --on-player: var(--on-p4);
 }
+/* Pages about you (Timer, Me) swap the UI accent for your player color. */
+[data-accent='1'] {
+  --accent: var(--p1);
+  --accent-deep: var(--track-p1);
+  --on-accent: var(--on-p1);
+}
+[data-accent='2'] {
+  --accent: var(--p2);
+  --accent-deep: var(--track-p2);
+  --on-accent: var(--on-p2);
+}
+[data-accent='3'] {
+  --accent: var(--p3);
+  --accent-deep: var(--track-p3);
+  --on-accent: var(--on-p3);
+}
+[data-accent='4'] {
+  --accent: var(--p4);
+  --accent-deep: var(--track-p4);
+  --on-accent: var(--on-p4);
+}
 .accent {
   background: var(--accent);
   color: var(--on-accent);

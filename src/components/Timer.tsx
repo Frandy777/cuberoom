@@ -65,7 +65,11 @@ export function Timer({
   const finished = solve?.status === 'done';
   const display = finished ? solveTime(solve) : time(timer.ms);
   return (
-    <div className="timer-page" hidden={!visible}>
+    <div
+      className="timer-page"
+      hidden={!visible}
+      data-accent={room.players.find((p) => p.id === playerId)?.color}
+    >
       <section className={`card scramble ${finished ? 'solved' : ''}`}>
         <p ref={scrambleRef}>{round.scramble}</p>
       </section>

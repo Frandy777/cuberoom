@@ -2,6 +2,8 @@
  * --p1…--p4 are reserved for players (avatars, seats, per-player stats, winners).
  * UI chrome uses a single --accent plus the state colors, none of which may
  * share a hue with a player color.
+ * --track-pN backs a thumb drawn in --on-pN, so it steps away from that color:
+ * lighter under a dark thumb, darker under a white one.
  */
 .t-classic {
   --bg: #f0eeea;
@@ -20,12 +22,16 @@
   --on-btn: #ffffff;
   --p1: #6b3cf0;
   --on-p1: #ffffff;
+  --track-p1: color-mix(in oklab, var(--p1), black 12%);
   --p2: #d61f74;
   --on-p2: #ffffff;
+  --track-p2: color-mix(in oklab, var(--p2), black 12%);
   --p3: #c8f04b;
   --on-p3: #1a1816;
+  --track-p3: color-mix(in oklab, var(--p3), white 22%);
   --p4: #3fd8f0;
   --on-p4: #1a1816;
+  --track-p4: color-mix(in oklab, var(--p4), white 22%);
   --accent: #1d3a9e;
   --accent-deep: #172f82;
   --on-accent: #ffffff;
@@ -58,12 +64,16 @@
   --on-btn: #12130f;
   --p1: #e4ff3a;
   --on-p1: #12130f;
+  --track-p1: color-mix(in oklab, var(--p1), white 22%);
   --p2: #ec3a3f;
   --on-p2: #ffffff;
+  --track-p2: color-mix(in oklab, var(--p2), black 12%);
   --p3: #8b45e8;
   --on-p3: #ffffff;
+  --track-p3: color-mix(in oklab, var(--p3), black 12%);
   --p4: #2f6bf5;
   --on-p4: #ffffff;
+  --track-p4: color-mix(in oklab, var(--p4), black 12%);
   --accent: #d9ccff;
   --accent-deep: #c4b3fa;
   --on-accent: #12130f;
