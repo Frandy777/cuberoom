@@ -215,9 +215,19 @@ export default function App() {
     const timeout = setTimeout(() => setToast(''), 3200);
     return () => clearTimeout(timeout);
   }, [toast]);
+  // A new round no longer pulls players off whatever tab they're on; a splash announces it.
   useEffect(() => {
     setTab('timer');
-  }, [round?.number]);
+  }, [room?.code]);
+  const [splash, setSplash] = useState<number>();
+  const seenRound = useRef<{ code?: string; number: number }>({ number: 0 });
+  useEffect(() => {
+    const number = round?.number ?? 0;
+    const prev = seenRound.current;
+    // Only rounds started while we watch; joining or reconnecting mid-session stays quiet.
+    if (room && prev.code === room.code && number > prev.number) setSplash(number);
+    seenRound.current = { code: room?.code, number };
+  }, [room?.code, round?.number]);
   useEffect(() => {
     if (room?.phase === 'finished') setTab('battle');
   }, [room?.phase]);
@@ -608,6 +618,19 @@ export default function App() {
       <div className="page" ref={pageRef}>
         {content}
       </div>
+      {splash !== undefined && (
+        <div
+          key={splash}
+          className="round-splash"
+          role="status"
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) setSplash(undefined);
+          }}
+        >
+          <small>Round</small>
+          <strong className="mono">{splash}</strong>
+        </div>
+      )}
       <Presence ms={400}>{toast && <Toast text={toast} />}</Presence>
       <Presence>
         {menu && room && (
