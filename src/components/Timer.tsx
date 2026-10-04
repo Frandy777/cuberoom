@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ClientMessage, RoomState } from '../../shared/protocol';
 import { currentRound } from '../../shared/protocol';
 import { solveTime, statistics, time } from '../../shared/stats';
 import { CubeNet } from './CubeNet';
 import { useTimer } from '../hooks/useTimer';
+import { enter } from '../motion';
+import { Thumb } from './Thumb';
 export function Timer({
   room,
   playerId,
@@ -21,6 +23,14 @@ export function Timer({
   const solve = round.solves.find((s) => s.playerId === playerId);
   const timer = useTimer(room.code, round.number, solve, connected, send);
   const stats = statistics(room.history, playerId);
+  const scrambleRef = useRef<HTMLParagraphElement>(null);
+  const netRef = useRef<HTMLElement>(null);
+  // Timer is keyed by round, so this marks each new scramble arriving.
+  useEffect(() => {
+    if (scrambleRef.current) enter(scrambleRef.current, 0, 250);
+    const net = netRef.current?.firstElementChild;
+    if (net) enter(net, 40, 250);
+  }, []);
   useEffect(() => {
     if (!active) return;
     const down = (e: KeyboardEvent) => {
@@ -53,10 +63,10 @@ export function Timer({
   return (
     <div className="timer-page" hidden={!active}>
       <section className={`card scramble ${finished ? 'solved' : ''}`}>
-        <p>{round.scramble}</p>
+        <p ref={scrambleRef}>{round.scramble}</p>
       </section>
       <div className="preview-row">
-        <section className="card net-card">
+        <section className="card net-card" ref={netRef}>
           <CubeNet event={room.event} scramble={round.scramble} />
         </section>
         <div className="mini-stats">
@@ -98,6 +108,12 @@ export function Timer({
           </div>
           {room.phase === 'playing' && (
             <div className="penalties" role="group" aria-label="Penalty">
+              <Thumb
+                index={['none', '+2', 'DNF'].indexOf(solve.penalty)}
+                count={3}
+                pad={6}
+                gap={6}
+              />
               {(['none', '+2', 'DNF'] as const).map((p) => (
                 <button
                   key={p}

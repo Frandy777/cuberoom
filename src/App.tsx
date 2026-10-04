@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
+import { flushSync } from 'react-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +42,8 @@ import { Setup } from './components/Setup';
 import { PuzzleIcon } from './components/CubeNet';
 import { Stats } from './components/Stats';
 import { Timer } from './components/Timer';
+import { Thumb } from './components/Thumb';
+import { Presence, useEntrance, useExiting, usePop } from './motion';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 function initialProfile(): Profile {
@@ -54,6 +64,7 @@ function Modal({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const exiting = useExiting();
   useEffect(() => {
     ref.current?.showModal();
     return () => ref.current?.close();
@@ -62,6 +73,7 @@ function Modal({
     <dialog
       ref={ref}
       className="modal"
+      data-closing={exiting || undefined}
       onCancel={(e) => {
         e.preventDefault();
         onClose?.();
@@ -86,6 +98,23 @@ function Modal({
       )}
       {children}
     </dialog>
+  );
+}
+function Badge({ done, total }: { done: number; total: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  usePop(ref, done);
+  return (
+    <span ref={ref} className={`nav-badge ${done === total ? 'done' : ''}`}>
+      {done}/{total}
+    </span>
+  );
+}
+function Toast({ text }: { text: string }) {
+  return (
+    <div className="toast" role="status" data-closing={useExiting() || undefined}>
+      <Check size={18} />
+      {text}
+    </div>
   );
 }
 function ProfileEditor({
@@ -147,6 +176,17 @@ export default function App() {
   const host = room?.hostId === session?.playerId;
   const allDone = roundDone(round);
   const connected = status === 'connected';
+  const view = game.connecting
+    ? 'connecting'
+    : page === 'create' || (page === 'settings' && room)
+      ? page
+      : !room
+        ? 'home'
+        : room.phase === 'lobby'
+          ? 'lobby'
+          : 'room';
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEntrance(pageRef, view);
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -159,7 +199,7 @@ export default function App() {
       });
     },
   });
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.className = `t-${theme}`;
     localStorage.setItem('cuberoom-theme', theme);
     document
@@ -249,14 +289,22 @@ export default function App() {
         setError('Sharing unavailable. Copy the room code instead.');
     }
   }
+  function changeTheme(t: string) {
+    if (t === theme) return;
+    const apply = () => flushSync(() => setTheme(t));
+    // Crossfade the whole page instead of snapping every color at once.
+    if (document.startViewTransition) document.startViewTransition(apply);
+    else apply();
+  }
   const themeSwitch = (
     <div className="theme-switch" role="group" aria-label="theme">
+      <Thumb index={theme === 'volt' ? 1 : 0} count={2} pad={4} gap={2} />
       {['classic', 'volt'].map((t) => (
         <button
           key={t}
           aria-label={`${t === 'classic' ? 'Classic' : 'Volt'} theme`}
           aria-pressed={theme === t}
-          onClick={() => setTheme(t)}
+          onClick={() => changeTheme(t)}
         >
           <span className={`swatch ${t}`} />
         </button>
@@ -322,7 +370,7 @@ export default function App() {
         <section className="hero">
           <div className="hero-cube" aria-hidden="true">
             {Array.from({ length: 9 }, (_, i) => (
-              <i key={i} />
+              <i key={i} style={{ '--d': Math.floor(i / 3) + (i % 3) } as CSSProperties} />
             ))}
           </div>
           <div className="puzzle-tags">
@@ -514,6 +562,7 @@ export default function App() {
           </div>
         )}
         <nav className="room-nav" aria-label="Room">
+          <Thumb index={['timer', 'me', 'battle'].indexOf(tab)} count={3} pad={8} gap={6} />
           {(
             [
               { id: 'timer', label: 'Timer', Icon: TimerIcon },
@@ -529,9 +578,10 @@ export default function App() {
               <Icon size={22} />
               {label}
               {id === 'battle' && round && (
-                <span className={`nav-badge ${allDone ? 'done' : ''}`}>
-                  {round.solves.filter((s) => s.status === 'done').length}/{round.solves.length}
-                </span>
+                <Badge
+                  done={round.solves.filter((s) => s.status === 'done').length}
+                  total={round.solves.length}
+                />
               )}
             </button>
           ))}
@@ -554,124 +604,127 @@ export default function App() {
           </button>
         </div>
       )}
-      {content}
-      {toast && (
-        <div className="toast" role="status">
-          <Check size={18} />
-          {toast}
-        </div>
-      )}
-      {menu && room && (
-        <Modal onClose={() => setMenu(false)}>
-          <section className="menu-code">
-            <div>
-              <strong className="mono">{room.code}</strong>
-              <small>
-                {room.event[0]}×{room.event[0]} ·{' '}
-                {room.phase === 'lobby'
-                  ? 'Lobby'
-                  : room.phase === 'finished'
-                    ? 'Finished'
-                    : `Round ${round?.number}${room.rounds ? `/${room.rounds}` : ''}`}
-              </small>
+      <div className="page" ref={pageRef}>
+        {content}
+      </div>
+      <Presence ms={400}>{toast && <Toast text={toast} />}</Presence>
+      <Presence>
+        {menu && room && (
+          <Modal onClose={() => setMenu(false)}>
+            <section className="menu-code">
+              <div>
+                <strong className="mono">{room.code}</strong>
+                <small>
+                  {room.event[0]}×{room.event[0]} ·{' '}
+                  {room.phase === 'lobby'
+                    ? 'Lobby'
+                    : room.phase === 'finished'
+                      ? 'Finished'
+                      : `Round ${round?.number}${room.rounds ? `/${room.rounds}` : ''}`}
+                </small>
+              </div>
+              <button aria-label="Copy room code" onClick={() => copy()}>
+                <Copy size={22} />
+              </button>
+              <button aria-label="Share room link" onClick={share}>
+                <Share2 size={22} />
+              </button>
+            </section>
+            <div className="menu-theme">
+              <b>Theme</b>
+              {themeSwitch}
             </div>
-            <button aria-label="Copy room code" onClick={() => copy()}>
-              <Copy size={22} />
-            </button>
-            <button aria-label="Share room link" onClick={share}>
-              <Share2 size={22} />
-            </button>
-          </section>
-          <div className="menu-theme">
-            <b>Theme</b>
-            {themeSwitch}
-          </div>
-          <button
-            className="menu-item"
-            onClick={() => {
-              setDraft(profile);
-              setEditProfile(true);
-              setMenu(false);
-            }}
-          >
-            <UserPen size={22} />
-            <b>Edit profile</b>
-          </button>
-          <button
-            className="menu-item"
-            onClick={() => {
-              setMenu(false);
-              setConfirm('leave');
-            }}
-          >
-            <LogOut size={22} />
-            <b>Leave room</b>
-          </button>
-          {host && (
             <button
-              className="menu-item danger"
+              className="menu-item"
               onClick={() => {
+                setDraft(profile);
+                setEditProfile(true);
                 setMenu(false);
-                setConfirm('end');
               }}
             >
-              <Flag size={22} />
-              <b>End room</b>
+              <UserPen size={22} />
+              <b>Edit profile</b>
             </button>
-          )}
-        </Modal>
-      )}
-      {confirm && (
-        <Modal
-          title={confirm === 'end' ? 'End room?' : 'Leave room?'}
-          onClose={() => setConfirm(null)}
-        >
-          <p>
-            {confirm === 'end'
-              ? 'All players will leave and all results will be cleared.'
-              : 'An unfinished solve will be marked DNF.'}
-          </p>
-          <button
-            className={confirm === 'end' ? 'danger-button' : 'primary'}
-            onClick={() => {
-              if (connected) send({ type: confirm });
-              else if (confirm === 'leave') game.clear('');
-              setConfirm(null);
-              setPage('home');
-            }}
-            disabled={confirm === 'end' && !connected}
+            <button
+              className="menu-item"
+              onClick={() => {
+                setMenu(false);
+                setConfirm('leave');
+              }}
+            >
+              <LogOut size={22} />
+              <b>Leave room</b>
+            </button>
+            {host && (
+              <button
+                className="menu-item danger"
+                onClick={() => {
+                  setMenu(false);
+                  setConfirm('end');
+                }}
+              >
+                <Flag size={22} />
+                <b>End room</b>
+              </button>
+            )}
+          </Modal>
+        )}
+      </Presence>
+      <Presence>
+        {confirm && (
+          <Modal
+            title={confirm === 'end' ? 'End room?' : 'Leave room?'}
+            onClose={() => setConfirm(null)}
           >
-            {confirm === 'end' ? 'End room' : 'Leave room'}
-          </button>
-          <button className="secondary" onClick={() => setConfirm(null)}>
-            Keep playing
-          </button>
-        </Modal>
-      )}
-      {editProfile && (
-        <Modal title="Profile" onClose={() => setEditProfile(false)}>
-          <ProfileEditor profile={draft} onChange={setDraft} />
-          {!profileSchema.safeParse(draft).success && (
-            <p className="hint">Enter a name with 1–16 characters.</p>
-          )}
-          <button
-            className="primary"
-            disabled={!connected || !profileSchema.safeParse(draft).success}
-            onClick={() => {
-              const p = profileSchema.safeParse(draft);
-              if (!p.success) {
-                setError('Enter a name with 1–16 characters.');
-                return;
-              }
-              setProfile(p.data);
-              send({ type: 'profile', ...p.data });
-              setEditProfile(false);
-            }}
-          >
-            Save
-          </button>
-        </Modal>
-      )}
+            <p>
+              {confirm === 'end'
+                ? 'All players will leave and all results will be cleared.'
+                : 'An unfinished solve will be marked DNF.'}
+            </p>
+            <button
+              className={confirm === 'end' ? 'danger-button' : 'primary'}
+              onClick={() => {
+                if (connected) send({ type: confirm });
+                else if (confirm === 'leave') game.clear('');
+                setConfirm(null);
+                setPage('home');
+              }}
+              disabled={confirm === 'end' && !connected}
+            >
+              {confirm === 'end' ? 'End room' : 'Leave room'}
+            </button>
+            <button className="secondary" onClick={() => setConfirm(null)}>
+              Keep playing
+            </button>
+          </Modal>
+        )}
+      </Presence>
+      <Presence>
+        {editProfile && (
+          <Modal title="Profile" onClose={() => setEditProfile(false)}>
+            <ProfileEditor profile={draft} onChange={setDraft} />
+            {!profileSchema.safeParse(draft).success && (
+              <p className="hint">Enter a name with 1–16 characters.</p>
+            )}
+            <button
+              className="primary"
+              disabled={!connected || !profileSchema.safeParse(draft).success}
+              onClick={() => {
+                const p = profileSchema.safeParse(draft);
+                if (!p.success) {
+                  setError('Enter a name with 1–16 characters.');
+                  return;
+                }
+                setProfile(p.data);
+                send({ type: 'profile', ...p.data });
+                setEditProfile(false);
+              }}
+            >
+              Save
+            </button>
+          </Modal>
+        )}
+      </Presence>
       {needRefresh && (
         <Modal title="Update available">
           <p>

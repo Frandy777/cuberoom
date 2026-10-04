@@ -1,8 +1,10 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { Crown } from 'lucide-react';
 import type { RoomState } from '../../shared/protocol';
 import { currentRound, roundDone } from '../../shared/protocol';
 import { solveTime, statistics, time, value, winners } from '../../shared/stats';
+import { useFlip } from '../motion';
+import { Thumb } from './Thumb';
 
 export function Stats({
   room,
@@ -14,6 +16,8 @@ export function Stats({
   personal?: boolean;
 }) {
   const [view, setView] = useState<'round' | 'session'>('round');
+  const liveRef = useRef<HTMLDivElement>(null);
+  useFlip(liveRef);
   const current = currentRound(room);
   const roster = new Map(
     room.history.flatMap((r) =>
@@ -38,6 +42,7 @@ export function Stats({
     <div className="stats-content">
       {!personal && room.phase !== 'finished' && (
         <div className="segmented battle-switch">
+          <Thumb index={view === 'session' ? 1 : 0} count={2} pad={4} gap={4} />
           <button aria-pressed={view === 'round'} onClick={() => setView('round')}>
             This round
           </button>
@@ -80,7 +85,7 @@ export function Stats({
               ))}
             </div>
           </section>
-          <div className="live-round">
+          <div className="live-round" ref={liveRef}>
             {ranked.map((s, i) => {
               const p = room.players.find((p) => p.id === s.playerId);
               const win = winners(current).includes(s.playerId);
@@ -92,7 +97,11 @@ export function Stats({
                     ? s.penalty
                     : '';
               return (
-                <div className={`live-player ${win ? 'round-winner' : ''}`} key={s.playerId}>
+                <div
+                  className={`live-player ${win ? 'round-winner' : ''}`}
+                  key={s.playerId}
+                  data-flip={s.playerId}
+                >
                   <span className="rank mono">
                     {s.status === 'done' && Number.isFinite(value(s)) ? i + 1 : ''}
                   </span>
@@ -171,7 +180,11 @@ export function Stats({
                       <span className="wins-bar">
                         <i
                           className={`color-${p.color}`}
-                          style={{ width: `${maxWins ? (p.wins / maxWins) * 100 : 0}%` }}
+                          style={
+                            {
+                              '--pct': `${maxWins ? (p.wins / maxWins) * 100 : 0}%`,
+                            } as CSSProperties
+                          }
                         />
                       </span>
                       <strong className="mono">{p.wins}</strong>

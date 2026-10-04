@@ -10,6 +10,11 @@
   font-weight: 400 800;
   font-display: swap;
 }
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
 * {
   box-sizing: border-box;
 }
@@ -61,14 +66,31 @@ input:focus-visible {
 }
 button {
   transition:
-    filter 0.15s,
-    transform 0.15s;
+    filter 150ms ease,
+    transform 160ms var(--ease-out);
 }
-button:hover:not(:disabled) {
-  filter: brightness(0.96);
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
 }
 button:active:not(:disabled) {
-  transform: scale(0.985);
+  transform: scale(0.97);
+}
+.page {
+  display: contents;
+}
+/* Sliding highlight behind the selected option; see Thumb.tsx. */
+.thumb {
+  position: absolute;
+  transition: transform 250ms var(--ease-in-out);
+}
+.thumb ~ button {
+  position: relative;
+  transition:
+    color 250ms var(--ease-in-out),
+    filter 150ms ease,
+    transform 160ms var(--ease-out);
 }
 input {
   min-width: 0;
@@ -155,6 +177,7 @@ b {
   border-radius: 6px;
 }
 .theme-switch {
+  position: relative;
   display: flex;
   gap: 2px;
   padding: 4px;
@@ -168,7 +191,8 @@ b {
   display: grid;
   place-items: center;
 }
-.theme-switch button[aria-pressed='true'] {
+.theme-switch .thumb {
+  border-radius: 50%;
   background: var(--track);
 }
 .swatch {
@@ -289,6 +313,14 @@ b {
   height: 84px;
   border-radius: 20px;
   background: #ffffff59;
+  /* --d is the tile's diagonal, so the tiles wash in corner to corner. */
+  animation: tile-in 500ms var(--ease-out) calc(var(--d) * 60ms + 100ms) backwards;
+}
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }
 .puzzle-tags {
   display: flex;
@@ -326,6 +358,7 @@ b {
   width: 26px;
   height: 26px;
   border-radius: 50%;
+  transition: box-shadow 150ms ease;
 }
 .color-picker button[aria-pressed='true'] > span {
   box-shadow:
@@ -473,6 +506,11 @@ b {
   padding: 8px;
 }
 .puzzle-picker button {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    filter 150ms ease,
+    transform 160ms var(--ease-out);
   flex: 1;
   height: 136px;
   border-radius: 22px;
@@ -499,6 +537,7 @@ b {
   flex-shrink: 0;
 }
 .puzzle-icon i {
+  transition: background-color 200ms ease;
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px #00000018;
 }
@@ -514,6 +553,7 @@ b {
   gap: 16px;
 }
 .segmented {
+  position: relative;
   display: flex;
   gap: 4px;
   border-radius: 24px;
@@ -526,8 +566,11 @@ b {
   border-radius: 20px;
   font-weight: 800;
 }
-.segmented button[aria-pressed='true'] {
+.segmented .thumb {
+  border-radius: 20px;
   background: var(--surface);
+}
+.segmented button[aria-pressed='true'] {
   color: var(--text);
 }
 .round-count {
@@ -562,6 +605,11 @@ b {
   padding: 0 12px;
 }
 .presets button {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    filter 150ms ease,
+    transform 160ms var(--ease-out);
   flex: 1;
   height: 56px;
   border-radius: 18px;
@@ -659,6 +707,9 @@ b {
   gap: 12px;
 }
 .seat {
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
   padding: 16px;
   border-radius: 28px;
   display: flex;
@@ -820,8 +871,8 @@ b {
   border-radius: 32px;
   min-height: 245px;
   flex: 1;
-  background: var(--hero);
-  color: var(--on-hero);
+  background: var(--timer);
+  color: var(--on-timer);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -830,9 +881,33 @@ b {
   padding: 22px 12px;
   touch-action: none;
   overflow: hidden;
+  position: relative;
 }
 .timer-pad:hover:not(:disabled) {
   filter: none;
+}
+/* A ripple spreads from the center over the hold delay, reaching the corners as it arms
+   and staying while armed. A faint tint of the text color, so the pad keeps its color. */
+.timer-pad::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0.12;
+  clip-path: circle(0 at 50% 50%);
+  pointer-events: none;
+}
+.timer-pad.holding::before,
+.timer-pad.armed::before {
+  /* 71% of the reference radius is the half-diagonal, so the circle covers the corners. */
+  clip-path: circle(71% at 50% 50%);
+}
+.timer-pad.holding::before {
+  /* Matches the 350ms hold in useTimer; progress shouldn't ease. */
+  transition: clip-path 350ms linear;
+}
+.timer-pad > * {
+  position: relative;
 }
 .timer-pad:active:not(:disabled) {
   transform: none;
@@ -848,25 +923,16 @@ b {
 .timer-pad > span {
   font-size: 13px;
   font-weight: 600;
-  color: var(--hero-muted);
+  opacity: 0.75;
 }
 .timer-pad > small {
   font-size: 9px;
   letter-spacing: 0.1em;
-  color: var(--hero-muted);
-  opacity: 0.8;
-}
-.timer-pad.holding {
-  background: var(--alert);
-  color: var(--on-alert);
-}
-.timer-pad.armed {
-  background: var(--done);
-  color: var(--on-done);
+  opacity: 0.6;
 }
 .timer-pad.holding > span,
 .timer-pad.armed > span {
-  color: inherit;
+  opacity: 1;
 }
 .timer-pad.running {
   position: fixed;
@@ -914,6 +980,7 @@ b {
     monospace;
 }
 .penalties {
+  position: relative;
   display: flex;
   gap: 6px;
   background: var(--timer-deep);
@@ -930,9 +997,17 @@ b {
   font-size: 17px;
   font-weight: 800;
 }
-.penalties button[aria-pressed='true'] {
+.penalties .thumb {
+  border-radius: 17px;
   background: var(--on-timer);
+}
+.penalties button[aria-pressed='true'] {
   color: var(--timer);
+}
+.next-round {
+  transition:
+    opacity 250ms var(--ease-out),
+    transform 250ms var(--ease-out);
 }
 .next-round .primary {
   min-height: 52px;
@@ -965,11 +1040,15 @@ b {
   font-weight: 800;
   color: var(--muted);
 }
-.room-nav button[aria-current='page'] {
+.room-nav .thumb {
+  border-radius: 20px;
   background: var(--btn);
+}
+.room-nav button[aria-current='page'] {
   color: var(--on-btn);
 }
 .nav-badge {
+  transition: background-color 200ms ease;
   position: absolute;
   top: 1px;
   left: calc(50% + 7px);
@@ -1013,6 +1092,7 @@ b {
   color: var(--muted);
 }
 .live-round {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1052,6 +1132,11 @@ b {
   color: var(--on-tag);
   border-radius: 999px;
   padding: 3px 8px;
+}
+.round-winner > svg {
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 .live-player .solving {
   flex-shrink: 0;
@@ -1121,10 +1206,27 @@ b {
   max-height: 90dvh;
   overflow: auto;
   box-shadow: 0 -10px 60px #0003;
+  --modal-hidden: translateY(100%);
+  --modal-hidden-opacity: 1;
+  transition:
+    transform 400ms var(--ease-drawer),
+    opacity 400ms var(--ease-drawer);
 }
 .modal::backdrop {
   background: #0008;
   backdrop-filter: blur(5px);
+  transition: opacity 400ms var(--ease-drawer);
+}
+/* Presence keeps the dialog open while data-closing plays the exit. */
+.modal[data-closing] {
+  transform: var(--modal-hidden);
+  opacity: var(--modal-hidden-opacity);
+  transition-duration: 250ms;
+  pointer-events: none;
+}
+.modal[data-closing]::backdrop {
+  opacity: 0;
+  transition-duration: 250ms;
 }
 .modal > p {
   font-size: 14px;
@@ -1211,8 +1313,13 @@ b {
   position: fixed;
   z-index: 10;
   top: max(24px, env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin: 0 auto;
+  transition:
+    opacity 400ms ease,
+    transform 400ms ease;
   padding: 14px 22px;
   background: var(--hero);
   color: var(--on-hero);
@@ -1225,8 +1332,15 @@ b {
   gap: 8px;
   white-space: nowrap;
 }
+.toast[data-closing] {
+  opacity: 0;
+  transform: translateY(-100%);
+}
 .error-banner,
 .connection-banner {
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -1299,6 +1413,13 @@ b {
     margin: auto;
     border-radius: 32px;
     height: fit-content;
+    --modal-hidden: scale(0.96);
+    --modal-hidden-opacity: 0;
+    transition-duration: 250ms;
+    transition-timing-function: var(--ease-out);
+  }
+  .modal[data-closing] {
+    transition-duration: 200ms;
   }
   .hero {
     min-height: 300px;
@@ -1329,14 +1450,6 @@ b {
   }
   .timer-value {
     font-size: 18vw;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition: none !important;
   }
 }
 
@@ -1378,12 +1491,22 @@ b {
   gap: 6px;
 }
 .round-bars i {
+  position: relative;
   height: 10px;
   border-radius: 999px;
   background: var(--accent-light-deep);
 }
-.round-bars i.filled {
+.round-bars i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background: var(--on-accent-light);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 300ms var(--ease-out);
+}
+.round-bars i.filled::after {
+  clip-path: inset(0);
 }
 .rank {
   width: 18px;
@@ -1516,7 +1639,8 @@ b {
   display: block;
   height: 100%;
   border-radius: 10px;
-  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  clip-path: inset(0 calc(100% - var(--pct)) 0 0 round 10px);
+  transition: clip-path 400ms var(--ease-out);
 }
 .wins-row strong {
   min-width: 2ch;
@@ -1634,4 +1758,88 @@ b {
 }
 .log-cell .solving {
   color: var(--solving);
+}
+
+/* Entry states for elements as they mount. */
+@starting-style {
+  .modal[open] {
+    transform: var(--modal-hidden);
+    opacity: var(--modal-hidden-opacity);
+  }
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
+  .toast {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  .error-banner,
+  .connection-banner {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  .next-round {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .seat {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  .round-winner > svg {
+    opacity: 0;
+    transform: rotate(-20deg) scale(0.9);
+  }
+  .wins-bar i {
+    clip-path: inset(0 100% 0 0 round 10px);
+  }
+}
+
+/* Reduced motion: keep fades and color, drop movement. */
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    --modal-hidden: none;
+    --modal-hidden-opacity: 0;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
+  }
+  .toast[data-closing] {
+    transform: none;
+  }
+  .hero-cube i {
+    animation-name: fade-in;
+  }
+  .timer-pad::before,
+  .timer-pad.holding::before,
+  .timer-pad.armed::before {
+    clip-path: none;
+    opacity: 0;
+  }
+  .timer-pad.holding::before,
+  .timer-pad.armed::before {
+    opacity: 0.12;
+  }
+  .timer-pad.holding::before {
+    transition: opacity 350ms linear;
+  }
+  .thumb,
+  .wins-bar i,
+  .round-bars i::after {
+    transition: none;
+  }
+  @starting-style {
+    .toast,
+    .error-banner,
+    .connection-banner,
+    .next-round,
+    .seat,
+    .round-winner > svg {
+      transform: none;
+    }
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }

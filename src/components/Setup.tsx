@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { Event, Settings } from '../../shared/protocol';
 import { PuzzleIcon } from './CubeNet';
+import { Thumb } from './Thumb';
 export function Setup({
   initial,
   onBack,
@@ -44,6 +45,7 @@ export function Setup({
       </div>
       <section className="round-picker">
         <div className="segmented">
+          <Thumb index={endless ? 1 : 0} count={2} pad={4} gap={4} />
           <button aria-pressed={!endless} onClick={() => setEndless(false)}>
             Fixed
           </button>
