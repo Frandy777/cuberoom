@@ -667,6 +667,7 @@ export default function App() {
           key={splash}
           className="round-splash"
           role="status"
+          data-accent={room?.players.find((p) => p.id === session?.playerId)?.color}
           onAnimationEnd={(e) => {
             if (e.target === e.currentTarget) setSplash(undefined);
           }}
