@@ -1565,13 +1565,18 @@ b {
   color: var(--muted);
 }
 .round-progress {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--hero);
+  color: var(--on-hero);
   border-radius: 28px;
   padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.round-progress small {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--hero-muted);
 }
 .round-tally {
   display: flex;
@@ -1586,6 +1591,7 @@ b {
 }
 .round-tally span {
   font-size: 32px;
+  color: var(--hero-muted);
 }
 .round-bars {
   display: grid;
@@ -1595,14 +1601,14 @@ b {
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: var(--accent-deep);
+  background: color-mix(in srgb, var(--hero-muted) 35%, transparent);
 }
 .round-bars i::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--on-accent);
+  background: var(--on-hero);
   clip-path: inset(0 100% 0 0);
   transition: clip-path 300ms var(--ease-out);
 }

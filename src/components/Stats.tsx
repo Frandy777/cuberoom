@@ -68,6 +68,7 @@ export function Stats({
       {!showSession && current && (
         <>
           <section className="round-progress" aria-label="Round progress">
+            <small>Done</small>
             <div className="round-tally mono">
               <strong>{doneCount}</strong>
               <span>/{current.solves.length}</span>
