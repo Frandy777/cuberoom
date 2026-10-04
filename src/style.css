@@ -178,12 +178,10 @@ b {
   border-radius: 50%;
 }
 .swatch.classic {
-  background: #6b3cf0;
-  box-shadow: inset 0 0 0 2px white;
+  background: linear-gradient(135deg, #d9ccff 50%, #1d3a9e 50%);
 }
 .swatch.volt {
-  background: #e4ff3a;
-  box-shadow: inset 0 0 0 2px #12130f;
+  background: linear-gradient(135deg, #f59be8 50%, #0f8a5f 50%);
 }
 .icon-button {
   display: grid;
@@ -238,6 +236,14 @@ b {
   --player: var(--p4);
   --on-player: var(--on-p4);
 }
+.accent-light {
+  background: var(--accent-light);
+  color: var(--on-accent-light);
+}
+.accent-dark {
+  background: var(--accent-dark);
+  color: var(--on-accent-dark);
+}
 .inverse {
   background: var(--on-player);
   color: var(--player);
@@ -252,8 +258,8 @@ b {
 .hero {
   position: relative;
   overflow: hidden;
-  background: var(--p1);
-  color: var(--on-p1);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
   border-radius: 32px;
   padding: 24px;
   min-height: 300px;
@@ -291,8 +297,8 @@ b {
 .puzzle-tags span {
   font-size: 13px;
   font-weight: 700;
-  background: var(--on-p1);
-  color: var(--p1);
+  background: var(--on-accent-light);
+  color: var(--accent-light);
   border-radius: 999px;
   padding: 6px 11px;
 }
@@ -362,8 +368,8 @@ b {
 .create-card {
   min-height: 130px;
   flex: 1;
-  background: var(--p2);
-  color: var(--on-p2);
+  background: var(--accent-dark);
+  color: var(--on-accent-dark);
   border-radius: 28px;
   padding: 22px;
   display: flex;
@@ -392,8 +398,8 @@ b {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--on-p2);
-  color: var(--p2);
+  background: var(--on-accent-dark);
+  color: var(--accent-dark);
 }
 .home-footer {
   display: flex;
@@ -499,8 +505,8 @@ b {
   flex: 1;
   min-height: 340px;
   border-radius: 32px;
-  background: var(--soft);
-  color: var(--on-soft);
+  background: var(--accent-dark);
+  color: var(--on-accent-dark);
   padding: 8px 8px 20px;
   display: flex;
   flex-direction: column;
@@ -510,7 +516,7 @@ b {
   display: flex;
   gap: 4px;
   border-radius: 24px;
-  background: var(--soft-deep);
+  background: var(--accent-dark-deep);
   padding: 4px;
 }
 .segmented button {
@@ -584,8 +590,8 @@ b {
   font-size: 14px;
 }
 .room-code-card {
-  background: var(--soft);
-  color: var(--on-soft);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
   border-radius: 32px;
   padding: 22px;
   display: flex;
@@ -850,13 +856,14 @@ b {
   opacity: 0.8;
 }
 .timer-pad.holding {
-  background: var(--p2);
-  color: var(--on-p2);
+  background: var(--alert);
+  color: var(--on-alert);
 }
 .timer-pad.armed {
   background: var(--done);
   color: var(--on-done);
 }
+.timer-pad.holding > span,
 .timer-pad.armed > span {
   color: inherit;
 }
@@ -867,8 +874,8 @@ b {
   min-height: 0;
   border-radius: 0;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: var(--p1);
-  color: var(--on-p1);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
 }
 .timer-pad.running .timer-value {
   font-size: clamp(64px, 30vw, 160px);
@@ -879,8 +886,8 @@ b {
   font-size: clamp(48px, 21vw, 120px);
 }
 .timer-pad.solved {
-  background: var(--p1);
-  color: var(--on-p1);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
   justify-content: space-between;
   align-items: stretch;
   padding: 18px;
@@ -908,7 +915,7 @@ b {
 .penalties {
   display: flex;
   gap: 6px;
-  background: var(--p1-deep);
+  background: var(--accent-light-deep);
   border-radius: 22px;
   padding: 6px;
 }
@@ -918,13 +925,13 @@ b {
   border: 0;
   border-radius: 17px;
   background: transparent;
-  color: var(--on-p1);
+  color: var(--on-accent-light);
   font-size: 17px;
   font-weight: 800;
 }
 .penalties button[aria-pressed='true'] {
-  background: var(--on-p1);
-  color: var(--p1);
+  background: var(--on-accent-light);
+  color: var(--accent-light);
 }
 .next-round .primary {
   min-height: 52px;
@@ -975,8 +982,8 @@ b {
 }
 .session-done {
   padding: 18px;
-  background: var(--soft);
-  color: var(--on-soft);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
   border-radius: 22px;
   text-align: center;
 }
@@ -1175,8 +1182,8 @@ b {
   place-items: center;
 }
 .connection-banner {
-  background: var(--soft);
-  color: var(--on-soft);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
 }
 .ended {
   padding: 12px 18px;
@@ -1203,7 +1210,7 @@ b {
   height: 36px;
   border-radius: 50%;
   border: 3px solid var(--track);
-  border-top-color: var(--p1);
+  border-top-color: var(--accent-dark);
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
@@ -1285,8 +1292,8 @@ b {
   color: var(--on-btn);
 }
 .round-progress {
-  background: var(--soft);
-  color: var(--on-soft);
+  background: var(--accent-light);
+  color: var(--on-accent-light);
   border-radius: 28px;
   padding: 22px;
   display: flex;
@@ -1314,10 +1321,10 @@ b {
 .round-bars i {
   height: 10px;
   border-radius: 999px;
-  background: var(--soft-deep);
+  background: var(--accent-light-deep);
 }
 .round-bars i.filled {
-  background: var(--on-soft);
+  background: var(--on-accent-light);
 }
 .rank {
   width: 18px;

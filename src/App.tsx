@@ -296,13 +296,18 @@ export default function App() {
         )}
         <section className="hero">
           <div className="hero-cube" aria-hidden="true">
-            {[3, 0, 2, 4, 3, 5, 2, 5, 0].map((c, i) => (
-              <i
-                key={i}
-                style={{
-                  background: c === 0 ? 'var(--on-p1)' : c === 5 ? 'var(--soft)' : `var(--p${c})`,
-                }}
-              />
+            {[
+              'accent-dark',
+              'surface',
+              'on-accent-light',
+              'surface',
+              'accent-dark',
+              'accent-light-deep',
+              'on-accent-light',
+              'accent-dark',
+              'surface',
+            ].map((c, i) => (
+              <i key={i} style={{ background: `var(--${c})` }} />
             ))}
           </div>
           <div className="puzzle-tags">

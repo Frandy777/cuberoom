@@ -60,7 +60,7 @@ export function Timer({
           <CubeNet event={room.event} scramble={round.scramble} />
         </section>
         <div className="mini-stats">
-          <div className="mini-stat color-4">
+          <div className="mini-stat accent-light">
             <small>Ao5</small>
             <strong>{time(stats.ao5)}</strong>
           </div>

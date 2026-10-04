@@ -1,3 +1,9 @@
+/*
+ * --p1…--p4 are reserved for players (avatars, seats, per-player stats, winners).
+ * UI chrome uses two accents — --accent-light (dark text) and --accent-dark
+ * (white text) — plus the state colors, none of which may share a hue with a
+ * player color.
+ */
 .t-classic {
   --bg: #f0eeea;
   --surface: #ffffff;
@@ -15,26 +21,27 @@
   --on-btn: #ffffff;
   --p1: #6b3cf0;
   --on-p1: #ffffff;
-  --p1-deep: #5528d6;
   --p2: #d61f74;
   --on-p2: #ffffff;
-  --p2-dot: #ff5fa8;
   --p3: #c8f04b;
   --on-p3: #1a1816;
   --p4: #3fd8f0;
   --on-p4: #1a1816;
-  --soft: #d9ccff;
-  --soft-deep: #c4b3fa;
-  --on-soft: #1a1816;
-  --tag: #ffdceb;
-  --on-tag: #a3155b;
-  --solving: #b3176a;
-  --live: #0e8fa3;
-  --alert: #d61f74;
+  --accent-light: #d9ccff;
+  --accent-light-deep: #c4b3fa;
+  --on-accent-light: #1a1816;
+  --accent-dark: #1d3a9e;
+  --accent-dark-deep: #172f82;
+  --on-accent-dark: #ffffff;
+  --tag: #ffdcd9;
+  --on-tag: #b3161b;
+  --solving: #0f8a5f;
+  --live: #1a1816;
+  --alert: #e0261b;
   --on-alert: #ffffff;
-  --done: #c8f04b;
-  --on-done: #1a1816;
-  --danger: #d61f74;
+  --done: #0f8a5f;
+  --on-done: #ffffff;
+  --danger: #e0261b;
   --on-danger: #ffffff;
   --wait: #45403a;
 }
@@ -49,32 +56,33 @@
   --dash: #55545a;
   --icon-off: #46473f;
   --hero: #0f100d;
-  --on-hero: #e4ff3a;
+  --on-hero: #f59be8;
   --hero-muted: #8d9080;
-  --btn: #e4ff3a;
+  --btn: #f59be8;
   --on-btn: #12130f;
   --p1: #e4ff3a;
   --on-p1: #12130f;
-  --p1-deep: #d2ee24;
-  --p2: #f28ae8;
-  --on-p2: #12130f;
-  --p2-dot: #d63cc8;
-  --p3: #2f6bf5;
+  --p2: #ec3a3f;
+  --on-p2: #ffffff;
+  --p3: #8b45e8;
   --on-p3: #ffffff;
-  --p4: #8b45e8;
+  --p4: #2f6bf5;
   --on-p4: #ffffff;
-  --soft: #1a7f2b;
-  --soft-deep: #146a23;
-  --on-soft: #ffffff;
-  --tag: #d0263e;
-  --on-tag: #ffffff;
-  --solving: #ff6b7a;
-  --live: #3dcb3a;
-  --alert: #d0263e;
-  --on-alert: #ffffff;
-  --done: #e4ff3a;
-  --on-done: #12130f;
-  --danger: #d0263e;
-  --on-danger: #ffffff;
+  --accent-light: #f59be8;
+  --accent-light-deep: #ea84dc;
+  --on-accent-light: #12130f;
+  --accent-dark: #0f8a5f;
+  --accent-dark-deep: #0b734f;
+  --on-accent-dark: #ffffff;
+  --tag: #ff9330;
+  --on-tag: #12130f;
+  --solving: #f59be8;
+  --live: #f59be8;
+  --alert: #ff9330;
+  --on-alert: #12130f;
+  --done: #0f8a5f;
+  --on-done: #ffffff;
+  --danger: #ff9330;
+  --on-danger: #12130f;
   --wait: #c9c8be;
 }
