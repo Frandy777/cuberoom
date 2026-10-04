@@ -51,9 +51,9 @@
   --faint: #85847b;
   --dash: #55545a;
   --icon-off: #46473f;
-  --hero: #0f100d;
-  --on-hero: var(--accent);
-  --hero-muted: #8d9080;
+  --hero: #f5f6ee;
+  --on-hero: #12130f;
+  --hero-muted: #6b6a62;
   --btn: #f5f6ee;
   --on-btn: #12130f;
   --p1: #e4ff3a;
