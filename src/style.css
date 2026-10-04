@@ -204,10 +204,10 @@ b {
   border-radius: 50%;
 }
 .swatch.classic {
-  background: linear-gradient(135deg, #d9ccff 50%, #1d3a9e 50%);
+  background: #1d3a9e;
 }
 .swatch.volt {
-  background: linear-gradient(135deg, #f59be8 50%, #0f8a5f 50%);
+  background: #d9ccff;
 }
 .icon-button {
   display: grid;
@@ -262,13 +262,9 @@ b {
   --player: var(--p4);
   --on-player: var(--on-p4);
 }
-.accent-light {
-  background: var(--accent-light);
-  color: var(--on-accent-light);
-}
-.accent-dark {
-  background: var(--accent-dark);
-  color: var(--on-accent-dark);
+.accent {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .inverse {
   background: var(--on-player);
@@ -284,8 +280,8 @@ b {
 .hero {
   position: relative;
   overflow: hidden;
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 32px;
   padding: 24px;
   min-height: 300px;
@@ -332,8 +328,8 @@ b {
 .puzzle-tags span {
   font-size: 13px;
   font-weight: 700;
-  background: var(--on-accent-light);
-  color: var(--accent-light);
+  background: var(--on-accent);
+  color: var(--accent);
   border-radius: 999px;
   padding: 6px 11px;
 }
@@ -404,8 +400,8 @@ b {
 .create-card {
   min-height: 130px;
   flex: 1;
-  background: var(--accent-dark);
-  color: var(--on-accent-dark);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 28px;
   padding: 22px;
   display: flex;
@@ -434,8 +430,8 @@ b {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--on-accent-dark);
-  color: var(--accent-dark);
+  background: var(--on-accent);
+  color: var(--accent);
 }
 .home-footer {
   display: flex;
@@ -547,8 +543,8 @@ b {
   flex: 1;
   min-height: 340px;
   border-radius: 32px;
-  background: var(--accent-dark);
-  color: var(--on-accent-dark);
+  background: var(--accent);
+  color: var(--on-accent);
   padding: 8px 8px 20px;
   display: flex;
   flex-direction: column;
@@ -559,7 +555,7 @@ b {
   display: flex;
   gap: 4px;
   border-radius: 24px;
-  background: var(--accent-dark-deep);
+  background: var(--accent-deep);
   padding: 4px;
 }
 .segmented button {
@@ -641,8 +637,8 @@ b {
   font-size: 14px;
 }
 .room-code-card {
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 32px;
   padding: 22px;
   display: flex;
@@ -873,8 +869,8 @@ b {
   border-radius: 32px;
   min-height: 245px;
   flex: 1;
-  background: var(--timer);
-  color: var(--on-timer);
+  background: var(--accent);
+  color: var(--on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -943,8 +939,8 @@ b {
   min-height: 0;
   border-radius: 0;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: var(--timer);
-  color: var(--on-timer);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .timer-pad.running .timer-value {
   font-size: clamp(64px, 30vw, 160px);
@@ -955,8 +951,8 @@ b {
   font-size: clamp(48px, 21vw, 120px);
 }
 .timer-pad.solved {
-  background: var(--timer);
-  color: var(--on-timer);
+  background: var(--accent);
+  color: var(--on-accent);
   justify-content: space-between;
   align-items: stretch;
   padding: 18px;
@@ -985,7 +981,7 @@ b {
   position: relative;
   display: flex;
   gap: 6px;
-  background: var(--timer-deep);
+  background: var(--accent-deep);
   border-radius: 22px;
   padding: 6px;
 }
@@ -995,16 +991,16 @@ b {
   border: 0;
   border-radius: 17px;
   background: transparent;
-  color: var(--on-timer);
+  color: var(--on-accent);
   font-size: 17px;
   font-weight: 800;
 }
 .penalties .thumb {
   border-radius: 17px;
-  background: var(--on-timer);
+  background: var(--on-accent);
 }
 .penalties button[aria-pressed='true'] {
-  color: var(--timer);
+  color: var(--accent);
 }
 .next-round {
   transition:
@@ -1066,8 +1062,8 @@ b {
 }
 .session-done {
   padding: 18px;
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 22px;
   text-align: center;
 }
@@ -1363,8 +1359,8 @@ b {
   place-items: center;
 }
 .connection-banner {
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .ended {
   padding: 12px 18px;
@@ -1391,7 +1387,7 @@ b {
   height: 36px;
   border-radius: 50%;
   border: 3px solid var(--track);
-  border-top-color: var(--accent-dark);
+  border-top-color: var(--accent);
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
@@ -1468,8 +1464,8 @@ b {
   color: var(--muted);
 }
 .round-progress {
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--accent);
+  color: var(--on-accent);
   border-radius: 28px;
   padding: 22px;
   display: flex;
@@ -1498,14 +1494,14 @@ b {
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: var(--accent-light-deep);
+  background: var(--accent-deep);
 }
 .round-bars i::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--on-accent-light);
+  background: var(--on-accent);
   clip-path: inset(0 100% 0 0);
   transition: clip-path 300ms var(--ease-out);
 }

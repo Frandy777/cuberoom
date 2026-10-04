@@ -60,7 +60,7 @@ export function Stats({
             ['Wins', `${stats.wins}/${room.history.filter(roundDone).length}`],
           ].map(([label, v], i) => (
             <div
-              className={`personal-metric ${i === 0 ? 'accent-light' : i === 3 ? 'accent-dark' : 'card'}`}
+              className={`personal-metric ${i === 0 || i === 3 ? 'accent' : 'card'}`}
               key={label}
             >
               <small>{label}</small>
@@ -257,7 +257,7 @@ function SolveLog({ room, player }: { room: RoomState; player?: { id: string } }
               </span>
               <span className="solve-tags">
                 {win && <Crown size={16} aria-label="Round winner" />}
-                {pb && <span className="tag accent-dark">Best</span>}
+                {pb && <span className="tag accent">Best</span>}
                 {s.status === 'done' && s.penalty !== 'none' && (
                   <span className="tag penalty">{s.penalty}</span>
                 )}

@@ -1,8 +1,7 @@
 /*
  * --p1…--p4 are reserved for players (avatars, seats, per-player stats, winners).
- * UI chrome uses two accents — --accent-light (dark text) and --accent-dark
- * (white text) — plus the state colors, none of which may share a hue with a
- * player color.
+ * UI chrome uses a single --accent plus the state colors, none of which may
+ * share a hue with a player color.
  */
 .t-classic {
   --bg: #f0eeea;
@@ -27,15 +26,9 @@
   --on-p3: #1a1816;
   --p4: #3fd8f0;
   --on-p4: #1a1816;
-  --accent-light: #d9ccff;
-  --accent-light-deep: #c4b3fa;
-  --on-accent-light: #1a1816;
-  --accent-dark: #1d3a9e;
-  --accent-dark-deep: #172f82;
-  --on-accent-dark: #ffffff;
-  --timer: var(--accent-dark);
-  --timer-deep: var(--accent-dark-deep);
-  --on-timer: var(--on-accent-dark);
+  --accent: #1d3a9e;
+  --accent-deep: #172f82;
+  --on-accent: #ffffff;
   --tag: #ffdcd9;
   --on-tag: #b3161b;
   --solving: #0f8a5f;
@@ -59,7 +52,7 @@
   --dash: #55545a;
   --icon-off: #46473f;
   --hero: #0f100d;
-  --on-hero: #f59be8;
+  --on-hero: var(--accent);
   --hero-muted: #8d9080;
   --btn: #f5f6ee;
   --on-btn: #12130f;
@@ -71,19 +64,13 @@
   --on-p3: #ffffff;
   --p4: #2f6bf5;
   --on-p4: #ffffff;
-  --accent-light: #f59be8;
-  --accent-light-deep: #ea84dc;
-  --on-accent-light: #12130f;
-  --accent-dark: #0f8a5f;
-  --accent-dark-deep: #0b734f;
-  --on-accent-dark: #ffffff;
-  --timer: var(--accent-light);
-  --timer-deep: var(--accent-light-deep);
-  --on-timer: var(--on-accent-light);
+  --accent: #d9ccff;
+  --accent-deep: #c4b3fa;
+  --on-accent: #12130f;
   --tag: #ff9330;
   --on-tag: #12130f;
-  --solving: #f59be8;
-  --live: #f59be8;
+  --solving: var(--accent);
+  --live: var(--accent);
   --alert: #ff9330;
   --on-alert: #12130f;
   --done: #0f8a5f;
