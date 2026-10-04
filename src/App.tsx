@@ -539,6 +539,7 @@ export default function App() {
           playerId={session!.playerId}
           connected={connected}
           send={send}
+          visible={tab === 'timer'}
           active={tab === 'timer' && !menu && !confirm && !editProfile && !needRefresh}
         />
         {tab === 'me' && <Stats room={room} playerId={session!.playerId} personal />}

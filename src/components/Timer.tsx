@@ -11,12 +11,16 @@ export function Timer({
   playerId,
   connected,
   send,
+  visible,
   active,
 }: {
   room: RoomState;
   playerId: string;
   connected: boolean;
   send: (m: ClientMessage) => boolean;
+  /** Timer tab is shown; stays true behind dialogs so the backdrop blurs it. */
+  visible: boolean;
+  /** Visible and not covered by a dialog, so keyboard input should drive the timer. */
   active: boolean;
 }) {
   const round = currentRound(room)!;
@@ -61,7 +65,7 @@ export function Timer({
   const finished = solve?.status === 'done';
   const display = finished ? solveTime(solve) : time(timer.ms);
   return (
-    <div className="timer-page" hidden={!active}>
+    <div className="timer-page" hidden={!visible}>
       <section className={`card scramble ${finished ? 'solved' : ''}`}>
         <p ref={scrambleRef}>{round.scramble}</p>
       </section>
