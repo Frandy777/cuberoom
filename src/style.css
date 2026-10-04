@@ -711,27 +711,6 @@ b {
   font-size: 17px;
   white-space: nowrap;
 }
-.code-pill {
-  height: 36px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 11px;
-  border-radius: 999px;
-  background: var(--surface);
-  font:
-    700 12px JetBrains,
-    monospace;
-  letter-spacing: 0.04em;
-}
-.tiny-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--live);
-  display: inline-block;
-  flex-shrink: 0;
-}
 .timer-page {
   display: flex;
   flex-direction: column;
@@ -1308,10 +1287,6 @@ tbody th {
   }
   .room-header h2 {
     font-size: 15px;
-  }
-  .code-pill {
-    font-size: 10px;
-    padding: 0 9px;
   }
   .metrics strong {
     font-size: 16px;

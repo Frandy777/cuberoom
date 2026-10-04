@@ -464,10 +464,7 @@ export default function App() {
     content = (
       <>
         <header className="header room-header">
-          <button className="code-pill" onClick={() => copy()} aria-label="Copy room code">
-            <span className="tiny-dot" />
-            {room.code}
-          </button>
+          <span className="header-spacer" />
           <h2>
             {room.phase === 'finished' ? 'Finished' : `Round ${round?.number}`}
             <span className="faint">{room.rounds ? `/${room.rounds}` : ''}</span>
