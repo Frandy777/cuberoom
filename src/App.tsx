@@ -25,6 +25,7 @@ import {
   type Settings,
 } from '../shared/protocol';
 import { useRoom } from './hooks/useRoom';
+import { faceColors } from './cube';
 import { generateScramble } from './scramble';
 import { Setup } from './components/Setup';
 import { PuzzleIcon } from './components/CubeNet';
@@ -272,8 +273,8 @@ export default function App() {
         <header className="header">
           <div className="brand">
             <span className="brand-mark">
-              {[1, 2, 3, 4].map((c) => (
-                <i key={c} className={`color-${c}`} />
+              {(['R', 'B', 'D', 'F'] as const).map((f) => (
+                <i key={f} style={{ background: faceColors[f] }} />
               ))}
             </span>
             <span>CubeRoom</span>
@@ -296,18 +297,8 @@ export default function App() {
         )}
         <section className="hero">
           <div className="hero-cube" aria-hidden="true">
-            {[
-              'accent-dark',
-              'surface',
-              'on-accent-light',
-              'surface',
-              'accent-dark',
-              'accent-light-deep',
-              'on-accent-light',
-              'accent-dark',
-              'surface',
-            ].map((c, i) => (
-              <i key={i} style={{ background: `var(--${c})` }} />
+            {Array.from({ length: 9 }, (_, i) => (
+              <i key={i} />
             ))}
           </div>
           <div className="puzzle-tags">

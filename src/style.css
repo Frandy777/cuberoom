@@ -277,17 +277,18 @@ b {
 }
 .hero-cube {
   position: absolute;
-  right: -14px;
-  top: 26px;
-  transform: rotate(12deg);
+  right: -86px;
+  top: -46px;
+  transform: rotate(14deg);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  width: 112px;
+  gap: 12px;
+  width: 276px;
 }
 .hero-cube i {
-  height: 34px;
-  border-radius: 9px;
+  height: 84px;
+  border-radius: 20px;
+  background: #ffffff59;
 }
 .puzzle-tags {
   display: flex;
