@@ -216,8 +216,6 @@ export default function App() {
     try {
       if (navigator.share)
         await navigator.share({
-          title: 'CubeRoom',
-          text: `Join room ${room.code}`,
           url: `${location.origin}/?room=${room.code}`,
         });
       else await copy(true);
