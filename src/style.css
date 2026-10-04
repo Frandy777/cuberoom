@@ -19,6 +19,8 @@
   box-sizing: border-box;
 }
 html {
+  /* Reserve the scrollbar so tabs of different heights don't shift the layout sideways. */
+  scrollbar-gutter: stable;
   background: var(--bg, #f0eeea);
   color: var(--text, #1a1816);
   font-family:
@@ -1015,7 +1017,9 @@ b {
 }
 .room-nav {
   position: sticky;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  /* Matches .app's bottom padding, so the nav rests in the same spot whether the tab
+     scrolls (sticky) or not (in flow). */
+  bottom: max(20px, env(safe-area-inset-bottom));
   margin-top: auto;
   height: 72px;
   flex-shrink: 0;
@@ -1425,7 +1429,7 @@ b {
     min-height: 300px;
   }
   .room-nav {
-    bottom: 20px;
+    bottom: 45px; /* .app margin + border + padding */
   }
 }
 @media (max-width: 359px) {
