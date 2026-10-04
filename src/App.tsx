@@ -9,6 +9,7 @@ import {
   LogOut,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Share2,
   SlidersHorizontal,
   Timer as TimerIcon,
@@ -48,7 +49,8 @@ function Modal({
   children,
 }: {
   title?: string;
-  onClose: () => void;
+  // Omit to make the dialog undismissable.
+  onClose?: () => void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -60,17 +62,26 @@ function Modal({
     <dialog
       ref={ref}
       className="modal"
-      onCancel={onClose}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose?.();
+      }}
+      // Browsers may force-close on repeated Escape despite preventDefault.
+      onClose={(e) => {
+        if (!onClose) e.currentTarget.showModal();
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) onClose?.();
       }}
     >
       {title && (
         <div className="section-heading">
           <h2>{title}</h2>
-          <button className="icon-button" onClick={onClose} aria-label="Close">
-            <X />
-          </button>
+          {onClose && (
+            <button className="icon-button" onClick={onClose} aria-label="Close">
+              <X />
+            </button>
+          )}
         </div>
       )}
       {children}
@@ -127,6 +138,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [editProfile, setEditProfile] = useState(false);
   const [draft, setDraft] = useState(profile);
+  const [updating, setUpdating] = useState(false);
   const game = useRoom(profile);
   const { room, session, status, error, setError, send } = game;
   const roomRef = useRef(room);
@@ -138,7 +150,15 @@ export default function App() {
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    // A standalone PWA can stay open for days; check whenever it's reopened.
+    onRegisteredSW(_url, registration) {
+      if (!registration) return;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') void registration.update().catch(() => {});
+      });
+    },
+  });
   useEffect(() => {
     document.documentElement.className = `t-${theme}`;
     localStorage.setItem('cuberoom-theme', theme);
@@ -360,11 +380,6 @@ export default function App() {
             <Plus size={28} />
           </i>
         </button>
-        {needRefresh && (
-          <button className="secondary" onClick={() => updateServiceWorker(true)}>
-            Update app
-          </button>
-        )}
       </>
     );
   else if (room.phase === 'lobby')
@@ -476,7 +491,7 @@ export default function App() {
           playerId={session!.playerId}
           connected={connected}
           send={send}
-          active={tab === 'timer' && !menu && !confirm && !editProfile}
+          active={tab === 'timer' && !menu && !confirm && !editProfile && !needRefresh}
         />
         {tab === 'me' && <Stats room={room} playerId={session!.playerId} personal />}
         {tab === 'battle' && <Stats room={room} playerId={session!.playerId} />}
@@ -654,6 +669,24 @@ export default function App() {
             }}
           >
             Save
+          </button>
+        </Modal>
+      )}
+      {needRefresh && (
+        <Modal title="Update available">
+          <p>
+            A new version of CubeRoom is ready. Update to keep playing — you'll stay in your room.
+          </p>
+          <button
+            className="primary"
+            disabled={updating}
+            onClick={() => {
+              setUpdating(true);
+              void updateServiceWorker(true);
+            }}
+          >
+            {updating ? 'Updating…' : 'Update now'}
+            {!updating && <RefreshCw size={19} />}
           </button>
         </Modal>
       )}
