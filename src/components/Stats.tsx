@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Crown } from 'lucide-react';
 import type { RoomState } from '../../shared/protocol';
 import { currentRound, roundDone } from '../../shared/protocol';
@@ -29,6 +29,8 @@ export function Stats({
     .filter((s) => Number.isFinite(value(s)))
     .sort((a, b) => value(a) - value(b))[0];
   const leader = [...allStats].sort((a, b) => b.wins - a.wins)[0];
+  const maxWins = Math.max(0, ...allStats.map((p) => p.wins));
+  const completed = room.history.filter(roundDone).length;
   const showSession = personal || view === 'session' || room.phase === 'finished';
   const ranked = [...(current?.solves ?? [])].sort((a, b) => value(a) - value(b));
   const doneCount = current?.solves.filter((s) => s.status === 'done').length ?? 0;
@@ -123,30 +125,58 @@ export function Stats({
           {!personal && (
             <>
               <div className="session-summary">
-                <div className="card">
+                <div className="session-rounds">
                   <small>Rounds</small>
-                  <strong>
-                    {room.history.filter(roundDone).length}
-                    <span className="faint">{room.rounds ? `/${room.rounds}` : ''}</span>
+                  <strong
+                    style={fit(
+                      String(completed).length * 0.48 +
+                        (room.rounds ? (`/${room.rounds}`.length + 0.5) * 0.48 * 0.4 : 0),
+                    )}
+                  >
+                    {completed}
+                    {!!room.rounds && <span>/{room.rounds}</span>}
                   </strong>
                 </div>
-                <div className="accent-dark">
+                <div className={best ? `color-${best.color}` : 'card'}>
                   <small>Best single</small>
-                  <strong>{best ? solveTime(best) : '—'}</strong>
+                  <strong
+                    className="mono"
+                    style={fit((best ? solveTime(best) : '—').length * 0.55)}
+                  >
+                    {best ? solveTime(best) : '—'}
+                  </strong>
                   {best && (
                     <small>
                       {best.name} · R{best.round}
                     </small>
                   )}
                 </div>
-              </div>
-              {leader && leader.wins > 0 && (
-                <section className={`wins-summary color-${leader.color}`}>
+                <div className={leader && leader.wins > 0 ? `color-${leader.color}` : 'card'}>
                   <small>Most wins</small>
-                  <strong>{leader.id === playerId ? 'You' : leader.name}</strong>
-                  <b className="mono">
-                    {leader.wins}/{room.history.filter(roundDone).length}
-                  </b>
+                  <strong className="session-leader">
+                    {leader && leader.wins > 0
+                      ? leader.id === playerId
+                        ? 'You'
+                        : leader.name
+                      : '—'}
+                  </strong>
+                </div>
+              </div>
+              {allStats.length > 0 && (
+                <section className="card wins-table" aria-label="Wins">
+                  <small>Wins</small>
+                  {allStats.map((p) => (
+                    <div className="wins-row" key={p.id}>
+                      <b>{p.id === playerId ? 'You' : p.name}</b>
+                      <span className="wins-bar">
+                        <i
+                          className={`color-${p.color}`}
+                          style={{ width: `${maxWins ? (p.wins / maxWins) * 100 : 0}%` }}
+                        />
+                      </span>
+                      <strong className="mono">{p.wins}</strong>
+                    </div>
+                  ))}
                 </section>
               )}
               {allStats.map((p) => (
@@ -181,6 +211,11 @@ export function Stats({
       )}
     </div>
   );
+}
+
+// Scales a number down so it fits its card; `ems` is the text width at 1em.
+function fit(ems: number) {
+  return { '--fit-em': ems } as CSSProperties;
 }
 
 function SolveLog({ room, player }: { room: RoomState; player?: { id: string; color: number } }) {
