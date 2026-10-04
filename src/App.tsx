@@ -480,7 +480,7 @@ export default function App() {
         />
         {tab === 'me' && <Stats room={room} playerId={session!.playerId} personal />}
         {tab === 'battle' && <Stats room={room} playerId={session!.playerId} />}
-        {allDone && room.phase !== 'finished' && (
+        {tab === 'timer' && allDone && room.phase !== 'finished' && (
           <div className="next-round">
             <button
               className="primary"
