@@ -202,10 +202,21 @@ describe.skipIf(!base)('real Workers + Durable Object protocol', () => {
     host.close();
     await guest.until(() => guest.room?.players[0].connected === false);
     expect(guest.room!.hostId).toBe(session.playerId);
-    await guest.until(() => guest.room?.players.length === 1, 85_000);
+    await guest.until(() => guest.room?.players.length === 1, 150_000);
     expect(guest.room!.hostId).toBe(guest.session!.playerId);
     expect(guest.room!.history[0].solves[0].penalty).toBe('DNF');
     guest.send({ type: 'end' });
     await guest.until(() => guest.messages.some((m) => m.type === 'ended'));
+  }, 160_000);
+  it('keeps a lone host room while the host is away sharing the invite', async () => {
+    const session = await create();
+    const host = await new Client(session.code, 'Host', session.token).ready();
+    host.close();
+    await new Promise((resolve) => setTimeout(resolve, 80_000));
+    const back = await new Client(session.code, 'Host', session.token).ready();
+    expect(back.session!.playerId).toBe(session.playerId);
+    expect(back.room!.hostId).toBe(session.playerId);
+    back.send({ type: 'end' });
+    await back.until(() => back.messages.some((m) => m.type === 'ended'));
   }, 95_000);
 });

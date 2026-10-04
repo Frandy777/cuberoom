@@ -6,6 +6,21 @@ import {
   type RoomState,
   type Player,
 } from '../shared/protocol';
+// Hosts often background the app to share the invite, so the lobby waits longer.
+export const LOBBY_GRACE = 5 * 60_000;
+// During a match the others are blocked on a disconnected player.
+export const MATCH_GRACE = 2 * 60_000;
+export const IDLE_TTL = 5 * 60_000;
+// Removal only unblocks players who are still online; with nobody online the room just waits.
+export function expiredPlayers(room: RoomState, now: number) {
+  if (!room.players.some((p) => p.connected)) return [];
+  const grace = room.phase === 'playing' ? MATCH_GRACE : LOBBY_GRACE;
+  return room.players
+    .filter((p) => p.disconnectedAt !== null && now - p.disconnectedAt >= grace)
+    .map((p) => p.id);
+}
+export const roomIdle = (room: RoomState, now: number) =>
+  room.players.every((p) => p.disconnectedAt !== null && now - p.disconnectedAt >= IDLE_TTL);
 export function removePlayer(room: RoomState, id: string) {
   room.players = room.players.filter((p) => p.id !== id);
   const solve = currentRound(room)?.solves.find((s) => s.playerId === id);

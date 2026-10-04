@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyMessage, removePlayer } from '../worker/room-state';
+import {
+  IDLE_TTL,
+  LOBBY_GRACE,
+  MATCH_GRACE,
+  applyMessage,
+  expiredPlayers,
+  removePlayer,
+  roomIdle,
+} from '../worker/room-state';
 import {
   currentRound,
   messageSchema,
@@ -74,6 +82,25 @@ describe('room state and authority', () => {
     removePlayer(r, 'b');
     expect(r.hostId).toBe('');
     expect(roundDone(currentRound(r))).toBe(true);
+  });
+  it('expires disconnected players by phase, only while someone is still online', () => {
+    const r = room();
+    Object.assign(r.players[0], { connected: false, disconnectedAt: 0 });
+    expect(expiredPlayers(r, MATCH_GRACE)).toEqual([]);
+    expect(expiredPlayers(r, LOBBY_GRACE)).toEqual(['a']);
+    r.phase = 'playing';
+    expect(expiredPlayers(r, MATCH_GRACE)).toEqual(['a']);
+    Object.assign(r.players[1], { connected: false, disconnectedAt: 1000 });
+    expect(expiredPlayers(r, LOBBY_GRACE * 10)).toEqual([]);
+    expect(roomIdle(r, IDLE_TTL)).toBe(false);
+    expect(roomIdle(r, IDLE_TTL + 1000)).toBe(true);
+  });
+  it('keeps a lone host room through a backgrounded share', () => {
+    const r = room();
+    r.players.pop();
+    Object.assign(r.players[0], { connected: false, disconnectedAt: 0 });
+    expect(expiredPlayers(r, IDLE_TTL - 1)).toEqual([]);
+    expect(roomIdle(r, IDLE_TTL - 1)).toBe(false);
   });
   it('keeps accepted results immutable during finish replay', () => {
     const r = room();

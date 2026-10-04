@@ -7,6 +7,11 @@ import type {
   Session,
 } from '../../shared/protocol';
 const KEY = 'cuberoom-session';
+// Survives the OS killing a backgrounded PWA, which wipes sessionStorage.
+const RESUME = 'cuberoom-resume';
+// Matches the server's longest reconnect grace; older sessions are already gone.
+const RESUME_TTL = 5 * 60_000;
+const PING = JSON.stringify({ type: 'ping' });
 function saved<T>(key: string): T | null {
   try {
     return JSON.parse(sessionStorage.getItem(key) ?? 'null');
@@ -14,9 +19,27 @@ function saved<T>(key: string): T | null {
     return null;
   }
 }
+function restore(): Session | null {
+  try {
+    const resume = JSON.parse(localStorage.getItem(RESUME) ?? 'null') as {
+      session: Session;
+      savedAt: number;
+    } | null;
+    return (
+      saved<Session>(KEY) ??
+      (resume && Date.now() - resume.savedAt < RESUME_TTL ? resume.session : null)
+    );
+  } catch {
+    return null;
+  }
+}
+function remember(session: Session) {
+  sessionStorage.setItem(KEY, JSON.stringify(session));
+  localStorage.setItem(RESUME, JSON.stringify({ session, savedAt: Date.now() }));
+}
 export function useRoom(profile: Profile) {
-  const [session, setSession] = useState<Session | null>(() => saved(KEY));
-  const [target, setTarget] = useState<string | null>(() => saved<Session>(KEY)?.code ?? null);
+  const [session, setSession] = useState<Session | null>(restore);
+  const [target, setTarget] = useState<string | null>(() => session?.code ?? null);
   const [room, setRoom] = useState<RoomState | null>(null);
   const [status, setStatus] = useState<'offline' | 'connecting' | 'connected'>('offline');
   const [error, setError] = useState('');
@@ -28,13 +51,15 @@ export function useRoom(profile: Profile) {
   profileRef.current = profile;
   const saveOutbox = () =>
     sessionStorage.setItem('cuberoom-outbox', JSON.stringify(outbox.current));
-  const clear = useCallback((reason: string) => {
+  // `forget: false` keeps the resumable session for the tab that took it over.
+  const clear = useCallback((reason: string, forget = true) => {
     sessionRef.current = null;
     setSession(null);
     setTarget(null);
     setRoom(null);
     setStatus('offline');
     sessionStorage.removeItem(KEY);
+    if (forget) localStorage.removeItem(RESUME);
     for (const key of Object.keys(sessionStorage))
       if (key.startsWith('timer:')) sessionStorage.removeItem(key);
     outbox.current = [];
@@ -44,8 +69,11 @@ export function useRoom(profile: Profile) {
   const connect = useCallback((code: string, credentials?: Session) => {
     sessionRef.current = credentials ?? null;
     setSession(credentials ?? null);
-    if (credentials) sessionStorage.setItem(KEY, JSON.stringify(credentials));
-    else sessionStorage.removeItem(KEY);
+    if (credentials) remember(credentials);
+    else {
+      sessionStorage.removeItem(KEY);
+      localStorage.removeItem(RESUME);
+    }
     outbox.current = [];
     sessionStorage.removeItem('cuberoom-outbox');
     setEnded('');
@@ -56,16 +84,63 @@ export function useRoom(profile: Profile) {
     if (!target) return;
     let disposed = false,
       terminal = false,
+      opening = false,
       retries = 0;
+    let ws: WebSocket | null = null;
     let retry: ReturnType<typeof setTimeout>;
+    let timeout: ReturnType<typeof setTimeout>;
+    let probe: ReturnType<typeof setTimeout>;
     let heartbeat: ReturnType<typeof setInterval>;
-    let lastMessage = Date.now();
+    let lastMessage = Date.now(),
+      received = 0;
+    const stopped = () => disposed || terminal;
+    // Drop a socket without waiting for its close event: a socket killed while the
+    // page was frozen may take a long time to report it, or never do.
+    function retire() {
+      clearInterval(heartbeat);
+      clearTimeout(timeout);
+      clearTimeout(probe);
+      if (!ws) return;
+      ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null;
+      ws.close();
+      ws = socket.current = null;
+    }
+    function reconnect() {
+      retire();
+      clearTimeout(retry);
+      if (stopped()) return;
+      setStatus('connecting');
+      // Only explicit server answers end the session. Network failures retry forever,
+      // and a hidden page waits for `wake` instead of burning attempts while frozen.
+      if (!document.hidden) retry = setTimeout(open, Math.min(1000 * 2 ** retries++, 10_000));
+    }
+    // The user is looking at the page now: reconnect immediately, not after a backoff.
+    function restart() {
+      retire();
+      clearTimeout(retry);
+      retries = 0;
+      open();
+    }
+    function wake() {
+      if (stopped() || document.hidden) return;
+      if (ws?.readyState === WebSocket.OPEN) {
+        const seen = received;
+        ws.send(PING);
+        clearTimeout(probe);
+        probe = setTimeout(() => {
+          if (received === seen) restart();
+        }, 4000);
+      } else if (!ws) restart();
+    }
     async function open() {
-      if (disposed || terminal) return;
+      if (stopped() || opening || ws) return;
+      opening = true;
       setStatus('connecting');
       try {
-        const response = await fetch(`/api/rooms/${target}`);
-        if (disposed || terminal) return;
+        const response = await fetch(`/api/rooms/${target}`, {
+          signal: AbortSignal.timeout(8000),
+        });
+        if (stopped()) return;
         if (response.status === 404) {
           terminal = true;
           clear('Room not found or no longer available.');
@@ -73,33 +148,35 @@ export function useRoom(profile: Profile) {
         }
       } catch {
         /* The WebSocket retry below handles temporary offline states. */
+      } finally {
+        opening = false;
       }
-      if (disposed || terminal) return;
-      const ws = new WebSocket(
+      if (stopped() || ws) return;
+      const current = new WebSocket(
         `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/rooms/${target}/ws`,
       );
-      socket.current = ws;
-      ws.onopen = () => {
+      ws = socket.current = current;
+      timeout = setTimeout(reconnect, 10_000);
+      current.onopen = () => {
+        clearTimeout(timeout);
         lastMessage = Date.now();
-        ws.send(
+        current.send(
           JSON.stringify({ type: 'join', ...profileRef.current, token: sessionRef.current?.token }),
         );
         heartbeat = setInterval(() => {
-          if (Date.now() - lastMessage > 35_000) {
-            ws.close();
-            return;
-          }
-          if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping' }));
+          if (Date.now() - lastMessage > 35_000) reconnect();
+          else current.send(PING);
         }, 10_000);
       };
-      ws.onmessage = (e) => {
+      current.onmessage = (e) => {
         lastMessage = Date.now();
+        received++;
         const msg = JSON.parse(e.data) as ServerMessage;
         if (msg.type === 'welcome') {
           retries = 0;
           sessionRef.current = msg.session;
           setSession(msg.session);
-          sessionStorage.setItem(KEY, JSON.stringify(msg.session));
+          remember(msg.session);
           setStatus('connected');
           setError('');
         }
@@ -115,7 +192,7 @@ export function useRoom(profile: Profile) {
                 (m.type === 'finish' && solve?.status !== 'done')),
           );
           saveOutbox();
-          for (const m of outbox.current) ws.send(JSON.stringify(m));
+          for (const m of outbox.current) current.send(JSON.stringify(m));
         }
         if (msg.type === 'error') {
           setError(msg.message);
@@ -129,39 +206,33 @@ export function useRoom(profile: Profile) {
           clear(msg.reason);
         }
       };
-      ws.onclose = (e) => {
-        clearInterval(heartbeat);
-        if (disposed || terminal) return;
+      current.onclose = (e) => {
         if (e.code === 4002) {
           terminal = true;
-          clear('Connected in another tab.');
+          clear('Connected in another tab.', false);
           return;
         }
-        setStatus('connecting');
-        if (++retries > 6) {
-          terminal = true;
-          clear('Could not connect. Check your network or room code.');
-          return;
-        }
-        retry = setTimeout(open, Math.min(1000 * 2 ** (retries - 1), 8000));
+        reconnect();
       };
-      ws.onerror = () => ws.close();
+      current.onerror = reconnect;
     }
     open();
-    const online = () => {
-      if (socket.current?.readyState === WebSocket.CLOSED) {
-        clearTimeout(retry);
-        open();
-      }
+    const visibility = () => {
+      // Refresh the resume window: the OS may kill the app any time it is hidden.
+      if (document.hidden) {
+        if (sessionRef.current) remember(sessionRef.current);
+      } else wake();
     };
-    window.addEventListener('online', online);
+    document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('pageshow', wake);
+    window.addEventListener('online', wake);
     return () => {
       disposed = true;
       clearTimeout(retry);
-      clearInterval(heartbeat);
-      window.removeEventListener('online', online);
-      socket.current?.close();
-      socket.current = null;
+      retire();
+      document.removeEventListener('visibilitychange', visibility);
+      window.removeEventListener('pageshow', wake);
+      window.removeEventListener('online', wake);
     };
   }, [target, clear]);
   const send = useCallback((msg: ClientMessage) => {

@@ -7,14 +7,13 @@ import {
   type RoomState,
   type ServerMessage,
 } from '../shared/protocol';
-import { applyMessage, removePlayer } from './room-state';
+import { applyMessage, expiredPlayers, removePlayer, roomIdle } from './room-state';
 interface Env {
   ROOMS: DurableObjectNamespace<CubeRoom>;
   ASSETS: Fetcher;
   CREATE_LIMIT: RateLimit;
   CONNECT_LIMIT: RateLimit;
 }
-const GRACE = 60_000;
 const MAX_BYTES = 4096;
 const json = (data: unknown, status = 200) =>
   Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -94,12 +93,33 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 type Connection = { id?: string; window: number; count: number; lastSeen: number; joined: boolean };
+type Saved = { room: RoomState; tokens: [string, string][] };
 export class CubeRoom extends DurableObject<Env> {
-  // Intentionally memory-only: no room, result, or token is written to storage.
-  // Standard WebSockets keep the object awake. Deployment/restart ends the room.
+  // Room and tokens are persisted so a room survives eviction while everyone is
+  // backgrounded, and deploys. Sockets are not: clients reconnect with their token.
   private room: RoomState | null = null;
   private tokens = new Map<string, string>();
   private sockets = new Map<WebSocket, Connection>();
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    ctx.blockConcurrencyWhile(async () => {
+      const saved = await ctx.storage.get<Saved>('room');
+      if (!saved) return;
+      this.room = saved.room;
+      this.tokens = new Map(saved.tokens);
+      // No socket survived the restart; start each player's grace period now.
+      for (const p of this.room.players)
+        if (p.connected) {
+          p.connected = false;
+          p.disconnectedAt = Date.now();
+        }
+      if ((await ctx.storage.getAlarm()) === null) await this.schedule();
+    });
+  }
+  private save() {
+    if (this.room)
+      void this.ctx.storage.put<Saved>('room', { room: this.room, tokens: [...this.tokens] });
+  }
   private async schedule() {
     await this.ctx.storage.setAlarm(Date.now() + 15_000);
   }
@@ -109,6 +129,10 @@ export class CubeRoom extends DurableObject<Env> {
     } catch {
       this.disconnect(ws);
     }
+  }
+  private commit() {
+    this.save();
+    this.broadcast();
   }
   private broadcast() {
     if (this.room)
@@ -134,6 +158,7 @@ export class CubeRoom extends DurableObject<Env> {
         ],
       };
       this.tokens.set(token, id);
+      this.save();
       await this.schedule();
       return json({ code: data.code, token, playerId: id });
     }
@@ -179,10 +204,7 @@ export class CubeRoom extends DurableObject<Env> {
         let token = msg.token;
         if (token) {
           player = room.players.find((p) => p.id === this.tokens.get(token!));
-          if (
-            !player ||
-            (player.disconnectedAt !== null && Date.now() - player.disconnectedAt >= GRACE)
-          ) {
+          if (!player) {
             this.send(ws, {
               type: 'error',
               message: 'Session expired. Please rejoin the room.',
@@ -230,7 +252,7 @@ export class CubeRoom extends DurableObject<Env> {
           type: 'welcome',
           session: { code: room.code, playerId: player.id, token: token! },
         });
-        this.broadcast();
+        this.commit();
         return;
       }
       if (!c.joined) throw new Error('Join the room first.');
@@ -246,7 +268,7 @@ export class CubeRoom extends DurableObject<Env> {
         this.send(ws, { type: 'ended', reason: '' });
         ws.close(1000, 'Left');
         if (!room.players.length) this.destroy('All players have left.');
-        else this.broadcast();
+        else this.commit();
         return;
       }
       if (msg.type === 'end') {
@@ -255,7 +277,7 @@ export class CubeRoom extends DurableObject<Env> {
         return;
       }
       applyMessage(room, player, msg);
-      this.broadcast();
+      this.commit();
     } catch (error) {
       this.send(ws, {
         type: 'error',
@@ -275,7 +297,7 @@ export class CubeRoom extends DurableObject<Env> {
     if (player) {
       player.connected = false;
       player.disconnectedAt = Date.now();
-      this.broadcast();
+      this.commit();
     }
   }
   private destroy(reason: string) {
@@ -286,7 +308,7 @@ export class CubeRoom extends DurableObject<Env> {
       ws.close(1000, 'Room ended');
     }
     this.sockets.clear();
-    this.ctx.waitUntil(this.ctx.storage.deleteAlarm());
+    this.ctx.waitUntil(Promise.all([this.ctx.storage.deleteAlarm(), this.ctx.storage.deleteAll()]));
   }
   async alarm() {
     if (!this.room) return;
@@ -295,13 +317,14 @@ export class CubeRoom extends DurableObject<Env> {
         ws.close(4000, 'Heartbeat timeout');
         this.disconnect(ws);
       }
-    for (const p of [...this.room.players])
-      if (p.disconnectedAt !== null && Date.now() - p.disconnectedAt >= GRACE) this.remove(p.id);
-    if (!this.room.players.length) {
+    const expired = expiredPlayers(this.room, Date.now());
+    for (const id of expired) this.remove(id);
+    if (!this.room.players.length || roomIdle(this.room, Date.now())) {
       this.destroy('Room ended.');
       return;
     }
-    this.broadcast();
+    if (expired.length) this.commit();
+    else this.broadcast();
     await this.schedule();
   }
 }
