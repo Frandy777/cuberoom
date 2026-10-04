@@ -465,10 +465,7 @@ export default function App() {
       <>
         <header className="header room-header">
           <span className="header-spacer" />
-          <h2>
-            {room.phase === 'finished' ? 'Finished' : `Round ${round?.number}`}
-            <span className="faint">{room.rounds ? `/${room.rounds}` : ''}</span>
-          </h2>
+          <h2>{room.phase === 'finished' ? 'Finished' : `Round ${round?.number}`}</h2>
           <button className="icon-button" aria-label="Room menu" onClick={() => setMenu(true)}>
             <MoreHorizontal />
           </button>
