@@ -952,7 +952,9 @@ b {
 .timer-pad.armed > span {
   opacity: 1;
 }
-.timer-pad.running {
+/* `exiting` keeps it full screen while it morphs back into place; see Timer.tsx. */
+.timer-pad.running,
+.timer-pad.exiting {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -962,12 +964,17 @@ b {
   background: var(--accent);
   color: var(--on-accent);
 }
-.timer-pad.running .timer-value {
+.timer-pad.exiting > span {
+  display: none;
+}
+.timer-pad.running .timer-value,
+.timer-pad.exiting .timer-value {
   font-size: clamp(64px, 30vw, 160px);
   line-height: 1;
   letter-spacing: -0.05em;
 }
-.timer-pad.running .timer-value.long-time {
+.timer-pad.running .timer-value.long-time,
+.timer-pad.exiting .timer-value.long-time {
   font-size: clamp(48px, 21vw, 120px);
 }
 .timer-pad.solved {

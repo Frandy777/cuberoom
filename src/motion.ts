@@ -12,6 +12,7 @@ import {
 
 // Mirrors --ease-out in style.css; WAAPI can't read CSS variables.
 export const easeOut = 'cubic-bezier(0.23, 1, 0.32, 1)';
+export const easeDrawer = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
 export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
