@@ -175,42 +175,94 @@ export function Stats({
               ))}
             </>
           )}
-          <section className="card history">
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Round</th>
-                    {players.map((p) => (
-                      <th key={p.id}>{p.id === playerId ? 'You' : p.name}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...room.history].reverse().map((r) => (
-                    <tr key={r.number}>
-                      <th>R{r.number}</th>
-                      {players.map((p) => {
-                        const solve = r.solves.find((s) => s.playerId === p.id);
-                        return (
-                          <td key={p.id}>
-                            <span
-                              className={winners(r).includes(p.id) ? `winner color-${p.color}` : ''}
-                            >
-                              {solveTime(solve)}
-                            </span>
-                          </td>
-                        );
-                      })}
+          {personal && <SolveLog room={room} player={players.find((p) => p.id === playerId)} />}
+          {!personal && (
+            <section className="card history">
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Round</th>
+                      {players.map((p) => (
+                        <th key={p.id}>{p.id === playerId ? 'You' : p.name}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    {[...room.history].reverse().map((r) => (
+                      <tr key={r.number}>
+                        <th>R{r.number}</th>
+                        {players.map((p) => {
+                          const solve = r.solves.find((s) => s.playerId === p.id);
+                          return (
+                            <td key={p.id}>
+                              <span
+                                className={
+                                  winners(r).includes(p.id) ? `winner color-${p.color}` : ''
+                                }
+                              >
+                                {solveTime(solve)}
+                              </span>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+function SolveLog({ room, player }: { room: RoomState; player?: { id: string; color: number } }) {
+  if (!player) return null;
+  const rows = room.history
+    .map((r) => ({ round: r, solve: r.solves.find((s) => s.playerId === player.id) }))
+    .filter((r) => r.solve)
+    .reverse();
+  if (!rows.length) return null;
+  const best = Math.min(...rows.map((r) => value(r.solve!)));
+  return (
+    <section className="solve-log" aria-label="Your solves">
+      <div className="section-heading">
+        <b>Solves</b>
+        <small className="mono">{rows.filter((r) => r.solve!.status === 'done').length}</small>
+      </div>
+      {rows.map(({ round, solve }) => {
+        const s = solve!;
+        const win = winners(round).includes(player.id);
+        const pb = Number.isFinite(best) && value(s) === best;
+        return (
+          <div className="solve-row" key={round.number}>
+            <span
+              className={`solve-round mono ${win ? `color-${player.color}` : ''}`}
+              aria-label={`Round ${round.number}`}
+            >
+              {round.number}
+            </span>
+            <span className="solve-tags">
+              {win && <Crown size={18} aria-label="Round winner" />}
+              {pb && <span className="tag color-4">Best</span>}
+              {s.status === 'done' && s.penalty !== 'none' && (
+                <span className="tag penalty">{s.penalty}</span>
+              )}
+            </span>
+            {s.status === 'solving' ? (
+              <SpinnerArc className="solving" size={22} aria-label="Solving" />
+            ) : (
+              <strong className={`mono ${s.status === 'done' ? '' : 'faint'}`}>
+                {s.status === 'done' ? time(value(s)) : '—'}
+              </strong>
+            )}
+          </div>
+        );
+      })}
+    </section>
   );
 }
 

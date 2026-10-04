@@ -1447,3 +1447,67 @@ tbody th {
 .hero h1 {
   max-width: 260px;
 }
+.solve-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.solve-log .section-heading {
+  padding: 6px 4px 2px;
+  font-size: 17px;
+  font-weight: 800;
+}
+.solve-log .section-heading small {
+  font-size: 14px;
+  font-weight: 700;
+}
+.solve-row {
+  min-height: 64px;
+  background: var(--surface);
+  border-radius: 22px;
+  padding: 0 18px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.solve-round {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--track);
+  color: var(--muted2);
+  font-size: 14px;
+  font-weight: 800;
+}
+.solve-round[class*='color-'] {
+  background: var(--player);
+  color: var(--on-player);
+}
+.solve-tags {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.solve-tags .tag {
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+.solve-tags .penalty {
+  background: var(--tag);
+  color: var(--on-tag);
+}
+.solve-row strong {
+  font-size: 20px;
+  font-weight: 800;
+}
+.solve-row .solving {
+  flex-shrink: 0;
+  color: var(--solving);
+}
