@@ -1668,10 +1668,6 @@ b {
   font-size: 17px;
   font-weight: 800;
 }
-.solve-log .section-heading small {
-  font-size: 14px;
-  font-weight: 700;
-}
 .solve-row {
   min-height: 64px;
   background: var(--surface);
@@ -1692,10 +1688,6 @@ b {
   color: var(--muted2);
   font-size: 14px;
   font-weight: 800;
-}
-.solve-round[class*='color-'] {
-  background: var(--player);
-  color: var(--on-player);
 }
 .solve-tags {
   flex: 1;
@@ -1719,6 +1711,35 @@ b {
   font-weight: 800;
 }
 .solve-row .solving {
+  flex-shrink: 0;
+  color: var(--solving);
+}
+.solve-list {
+  background: var(--surface);
+  border-radius: 22px;
+  padding: 2px 18px;
+}
+.solve-item {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.solve-item + .solve-item {
+  border-top: 1px solid var(--track);
+}
+.solve-no {
+  min-width: 22px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+.solve-item strong {
+  font-size: 19px;
+  font-weight: 800;
+}
+.solve-item .solving {
   flex-shrink: 0;
   color: var(--solving);
 }

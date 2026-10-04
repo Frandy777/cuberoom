@@ -231,7 +231,7 @@ function fit(ems: number) {
   return { '--fit-em': ems } as CSSProperties;
 }
 
-function SolveLog({ room, player }: { room: RoomState; player?: { id: string; color: number } }) {
+function SolveLog({ room, player }: { room: RoomState; player?: { id: string } }) {
   if (!player) return null;
   const rows = room.history
     .map((r) => ({ round: r, solve: r.solves.find((s) => s.playerId === player.id) }))
@@ -243,37 +243,36 @@ function SolveLog({ room, player }: { room: RoomState; player?: { id: string; co
     <section className="solve-log" aria-label="Your solves">
       <div className="section-heading">
         <b>Solves</b>
-        <small className="mono">{rows.filter((r) => r.solve!.status === 'done').length}</small>
       </div>
-      {rows.map(({ round, solve }) => {
-        const s = solve!;
-        const win = winners(round).includes(player.id);
-        const pb = Number.isFinite(best) && value(s) === best;
-        return (
-          <div className="solve-row" key={round.number}>
-            <span
-              className={`solve-round mono ${win ? `color-${player.color}` : ''}`}
-              aria-label={`Round ${round.number}`}
-            >
-              {round.number}
-            </span>
-            <span className="solve-tags">
-              {win && <Crown size={18} aria-label="Round winner" />}
-              {pb && <span className="tag accent-dark">Best</span>}
-              {s.status === 'done' && s.penalty !== 'none' && (
-                <span className="tag penalty">{s.penalty}</span>
+      <div className="solve-list">
+        {rows.map(({ round, solve }) => {
+          const s = solve!;
+          // A crown only means something when there was someone to beat.
+          const win = round.solves.length > 1 && winners(round).includes(player.id);
+          const pb = Number.isFinite(best) && value(s) === best;
+          return (
+            <div className="solve-item" key={round.number}>
+              <span className="solve-no mono" aria-label={`Round ${round.number}`}>
+                {round.number}
+              </span>
+              <span className="solve-tags">
+                {win && <Crown size={16} aria-label="Round winner" />}
+                {pb && <span className="tag accent-dark">Best</span>}
+                {s.status === 'done' && s.penalty !== 'none' && (
+                  <span className="tag penalty">{s.penalty}</span>
+                )}
+              </span>
+              {s.status === 'solving' ? (
+                <SpinnerArc className="solving" size={20} aria-label="Solving" />
+              ) : (
+                <strong className={`mono ${s.status === 'done' ? '' : 'faint'}`}>
+                  {s.status === 'done' ? time(value(s)) : '—'}
+                </strong>
               )}
-            </span>
-            {s.status === 'solving' ? (
-              <SpinnerArc className="solving" size={22} aria-label="Solving" />
-            ) : (
-              <strong className={`mono ${s.status === 'done' ? '' : 'faint'}`}>
-                {s.status === 'done' ? time(value(s)) : '—'}
-              </strong>
-            )}
-          </div>
-        );
-      })}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
