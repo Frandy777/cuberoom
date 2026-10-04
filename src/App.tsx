@@ -5,6 +5,7 @@ import {
   Check,
   Copy,
   Crown,
+  Flag,
   LogOut,
   MoreHorizontal,
   Plus,
@@ -12,6 +13,7 @@ import {
   SlidersHorizontal,
   Timer as TimerIcon,
   Trophy,
+  UserPen,
   UserRound,
   WifiOff,
   X,
@@ -45,7 +47,7 @@ function Modal({
   onClose,
   children,
 }: {
-  title: string;
+  title?: string;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -63,12 +65,14 @@ function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="section-heading">
-        <h2>{title}</h2>
-        <button className="icon-button" onClick={onClose} aria-label="Close">
-          <X />
-        </button>
-      </div>
+      {title && (
+        <div className="section-heading">
+          <h2>{title}</h2>
+          <button className="icon-button" onClick={onClose} aria-label="Close">
+            <X />
+          </button>
+        </div>
+      )}
       {children}
     </dialog>
   );
@@ -543,45 +547,61 @@ export default function App() {
         </div>
       )}
       {menu && room && (
-        <Modal title="Room menu" onClose={() => setMenu(false)}>
+        <Modal onClose={() => setMenu(false)}>
+          <section className="menu-code">
+            <div>
+              <strong className="mono">{room.code}</strong>
+              <small>
+                {room.event[0]}×{room.event[0]} ·{' '}
+                {room.phase === 'lobby'
+                  ? 'Lobby'
+                  : room.phase === 'finished'
+                    ? 'Finished'
+                    : `Round ${round?.number}${room.rounds ? `/${room.rounds}` : ''}`}
+              </small>
+            </div>
+            <button aria-label="Copy room code" onClick={() => copy()}>
+              <Copy size={22} />
+            </button>
+            <button aria-label="Share room link" onClick={share}>
+              <Share2 size={22} />
+            </button>
+          </section>
           <div className="menu-theme">
             <b>Theme</b>
             {themeSwitch}
           </div>
-          <button className="secondary" onClick={share}>
-            <Share2 size={18} />
-            Share · {room.code}
-          </button>
           <button
-            className="secondary"
+            className="menu-item"
             onClick={() => {
               setDraft(profile);
               setEditProfile(true);
               setMenu(false);
             }}
           >
-            Edit profile
+            <UserPen size={22} />
+            <b>Edit profile</b>
           </button>
-
           <button
-            className="primary"
+            className="menu-item"
             onClick={() => {
               setMenu(false);
               setConfirm('leave');
             }}
           >
-            <LogOut size={18} />
-            Leave room
+            <LogOut size={22} />
+            <b>Leave room</b>
           </button>
           {host && (
             <button
-              className="danger-button"
+              className="menu-item danger"
               onClick={() => {
                 setMenu(false);
                 setConfirm('end');
               }}
             >
-              End room
+              <Flag size={22} />
+              <b>End room</b>
             </button>
           )}
         </Modal>

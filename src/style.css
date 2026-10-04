@@ -1143,7 +1143,69 @@ b {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 0;
+  padding: 18px 4px 6px;
+}
+.menu-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 16px 16px 16px 22px;
+}
+.menu-code > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menu-code strong {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+}
+.menu-code small {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+.menu-code button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--bg);
+}
+.menu-code button:last-child {
+  background: var(--hero);
+  color: var(--on-hero);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 64px;
+  margin-top: 12px;
+  padding: 14px 22px;
+  border-radius: 28px;
+  background: var(--surface);
+  text-align: left;
+}
+.menu-item > svg {
+  flex-shrink: 0;
+}
+.menu-item b {
+  font-size: 17px;
+  font-weight: 800;
+}
+.menu-item.danger {
+  background: var(--danger);
+  color: var(--on-danger);
 }
 .toast {
   position: fixed;
