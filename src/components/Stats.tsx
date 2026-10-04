@@ -1,20 +1,19 @@
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { Check, Crown, Eye, LogOut, WifiOff } from 'lucide-react';
 import type { Player, RoomState, Solve } from '../../shared/protocol';
 import { currentRound, roundDone } from '../../shared/protocol';
 import { solveTime, statistics, time, value, winners } from '../../shared/stats';
-import { Thumb } from './Thumb';
 
 export function Stats({
   room,
   playerId,
-  personal = false,
+  view,
 }: {
   room: RoomState;
   playerId: string;
-  personal?: boolean;
+  view: 'stats' | 'round' | 'standings';
 }) {
-  const [view, setView] = useState<'round' | 'session'>('round');
+  const personal = view === 'stats';
   const current = currentRound(room);
   const roster = new Map(
     room.history.flatMap((r) =>
@@ -32,21 +31,9 @@ export function Stats({
   const leader = [...allStats].sort((a, b) => b.wins - a.wins)[0];
   const maxWins = Math.max(0, ...allStats.map((p) => p.wins));
   const completed = room.history.filter(roundDone).length;
-  const showSession = personal || view === 'session' || room.phase === 'finished';
   const doneCount = current?.solves.filter((s) => s.status === 'done').length ?? 0;
   return (
     <div className="stats-content" data-accent={personal ? roster.get(playerId)?.color : undefined}>
-      {!personal && room.phase !== 'finished' && (
-        <div className="segmented battle-switch">
-          <Thumb index={view === 'session' ? 1 : 0} count={2} pad={4} gap={4} />
-          <button aria-pressed={view === 'round'} onClick={() => setView('round')}>
-            This round
-          </button>
-          <button aria-pressed={view === 'session'} onClick={() => setView('session')}>
-            Session
-          </button>
-        </div>
-      )}
       {personal && (
         <div className="personal-metrics">
           {[
@@ -65,7 +52,7 @@ export function Stats({
           ))}
         </div>
       )}
-      {!showSession && current && (
+      {view === 'round' && current && (
         <>
           <section className="round-progress" aria-label="Round progress">
             <small>Done</small>
@@ -97,7 +84,7 @@ export function Stats({
           </div>
         </>
       )}
-      {showSession && (
+      {view !== 'round' && (
         <>
           {!personal && (
             <>

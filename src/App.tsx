@@ -10,6 +10,7 @@ import { flushSync } from 'react-dom';
 import {
   ArrowLeft,
   ArrowRight,
+  ChartLine,
   Check,
   Copy,
   Crown,
@@ -20,6 +21,7 @@ import {
   RefreshCw,
   Share2,
   SlidersHorizontal,
+  Swords,
   Timer as TimerIcon,
   Trophy,
   UserPen,
@@ -160,7 +162,7 @@ export default function App() {
   const [roomCode, setRoomCode] = useState(
     () => new URLSearchParams(location.search).get('room')?.toUpperCase() ?? '',
   );
-  const [tab, setTab] = useState<'timer' | 'me' | 'battle'>('timer');
+  const [tab, setTab] = useState<'timer' | 'round' | 'stats' | 'standings'>('timer');
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState<'leave' | 'end' | null>(null);
@@ -229,7 +231,7 @@ export default function App() {
     seenRound.current = { code: room?.code, number };
   }, [room?.code, round?.number]);
   useEffect(() => {
-    if (room?.phase === 'finished') setTab('battle');
+    if (room?.phase === 'finished') setTab('standings');
   }, [room?.phase]);
   function validProfile() {
     const r = profileSchema.safeParse(profile);
@@ -552,8 +554,7 @@ export default function App() {
           visible={tab === 'timer'}
           active={tab === 'timer' && !menu && !confirm && !editProfile && !needRefresh}
         />
-        {tab === 'me' && <Stats room={room} playerId={session!.playerId} personal />}
-        {tab === 'battle' && <Stats room={room} playerId={session!.playerId} />}
+        {tab !== 'timer' && <Stats room={room} playerId={session!.playerId} view={tab} />}
         {tab === 'timer' && allDone && room.phase !== 'finished' && (
           <div className="next-round">
             <button
@@ -573,12 +574,18 @@ export default function App() {
           </div>
         )}
         <nav className="room-nav" aria-label="Room">
-          <Thumb index={['timer', 'me', 'battle'].indexOf(tab)} count={3} pad={8} gap={6} />
+          <Thumb
+            index={['timer', 'round', 'stats', 'standings'].indexOf(tab)}
+            count={4}
+            pad={8}
+            gap={6}
+          />
           {(
             [
               { id: 'timer', label: 'Timer', Icon: TimerIcon },
-              { id: 'me', label: 'Me', Icon: UserRound },
-              { id: 'battle', label: 'Battle', Icon: Trophy },
+              { id: 'round', label: 'Round', Icon: Swords },
+              { id: 'stats', label: 'Stats', Icon: ChartLine },
+              { id: 'standings', label: 'Standings', Icon: Trophy },
             ] as const
           ).map(({ id, label, Icon }) => (
             <button
@@ -588,7 +595,7 @@ export default function App() {
             >
               <Icon size={22} />
               {label}
-              {id === 'battle' && round && (
+              {id === 'round' && round && (
                 <Badge
                   done={round.solves.filter((s) => s.status === 'done').length}
                   total={round.solves.length}
