@@ -874,8 +874,8 @@ b {
   min-height: 0;
   border-radius: 0;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--timer);
+  color: var(--on-timer);
 }
 .timer-pad.running .timer-value {
   font-size: clamp(64px, 30vw, 160px);
@@ -886,8 +886,8 @@ b {
   font-size: clamp(48px, 21vw, 120px);
 }
 .timer-pad.solved {
-  background: var(--accent-light);
-  color: var(--on-accent-light);
+  background: var(--timer);
+  color: var(--on-timer);
   justify-content: space-between;
   align-items: stretch;
   padding: 18px;
@@ -915,7 +915,7 @@ b {
 .penalties {
   display: flex;
   gap: 6px;
-  background: var(--accent-light-deep);
+  background: var(--timer-deep);
   border-radius: 22px;
   padding: 6px;
 }
@@ -925,13 +925,13 @@ b {
   border: 0;
   border-radius: 17px;
   background: transparent;
-  color: var(--on-accent-light);
+  color: var(--on-timer);
   font-size: 17px;
   font-weight: 800;
 }
 .penalties button[aria-pressed='true'] {
-  background: var(--on-accent-light);
-  color: var(--accent-light);
+  background: var(--on-timer);
+  color: var(--timer);
 }
 .next-round .primary {
   min-height: 52px;

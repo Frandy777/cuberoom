@@ -33,6 +33,9 @@
   --accent-dark: #1d3a9e;
   --accent-dark-deep: #172f82;
   --on-accent-dark: #ffffff;
+  --timer: var(--accent-dark);
+  --timer-deep: var(--accent-dark-deep);
+  --on-timer: var(--on-accent-dark);
   --tag: #ffdcd9;
   --on-tag: #b3161b;
   --solving: #0f8a5f;
@@ -58,7 +61,7 @@
   --hero: #0f100d;
   --on-hero: #f59be8;
   --hero-muted: #8d9080;
-  --btn: #f59be8;
+  --btn: #f5f6ee;
   --on-btn: #12130f;
   --p1: #e4ff3a;
   --on-p1: #12130f;
@@ -74,6 +77,9 @@
   --accent-dark: #0f8a5f;
   --accent-dark-deep: #0b734f;
   --on-accent-dark: #ffffff;
+  --timer: var(--accent-light);
+  --timer-deep: var(--accent-light-deep);
+  --on-timer: var(--on-accent-light);
   --tag: #ff9330;
   --on-tag: #12130f;
   --solving: #f59be8;
