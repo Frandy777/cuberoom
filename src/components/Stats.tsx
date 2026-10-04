@@ -237,7 +237,10 @@ function SolveLog({ room, player }: { room: RoomState; player?: { id: string } }
     .filter((r) => r.solve)
     .reverse();
   if (!rows.length) return null;
-  const best = Math.min(...rows.map((r) => value(r.solve!)));
+  // Best/Worst only rank finished times; a DNF already reads as the worst.
+  const times = rows.map((r) => value(r.solve!)).filter(Number.isFinite);
+  const best = Math.min(...times);
+  const worst = Math.max(...times);
   return (
     <section className="solve-log" aria-label="Your solves">
       <div className="section-heading">
@@ -246,26 +249,23 @@ function SolveLog({ room, player }: { room: RoomState; player?: { id: string } }
       <div className="solve-list">
         {rows.map(({ round, solve }) => {
           const s = solve!;
-          // A crown only means something when there was someone to beat.
-          const win = round.solves.length > 1 && winners(round).includes(player.id);
-          const pb = Number.isFinite(best) && value(s) === best;
+          const v = value(s);
+          const pb = times.length > 0 && v === best;
+          const pw = times.length > 1 && best !== worst && v === worst;
           return (
             <div className="solve-item" key={round.number}>
               <span className="solve-no mono" aria-label={`Round ${round.number}`}>
                 {round.number}
               </span>
               <span className="solve-tags">
-                {win && <Crown size={16} aria-label="Round winner" />}
                 {pb && <span className="tag accent">Best</span>}
-                {s.status === 'done' && s.penalty !== 'none' && (
-                  <span className="tag penalty">{s.penalty}</span>
-                )}
+                {pw && <span className="tag worst">Worst</span>}
               </span>
               {s.status === 'solving' ? (
                 <SpinnerArc className="solving" size={20} aria-label="Solving" />
               ) : (
                 <strong className={`mono ${s.status === 'done' ? '' : 'faint'}`}>
-                  {s.status === 'done' ? time(value(s)) : '—'}
+                  {solveTime(s)}
                 </strong>
               )}
             </div>

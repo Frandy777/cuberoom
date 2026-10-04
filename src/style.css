@@ -1757,9 +1757,9 @@ b {
   border-radius: 999px;
   padding: 3px 8px;
 }
-.solve-tags .penalty {
-  background: var(--tag);
-  color: var(--on-tag);
+.solve-tags .worst {
+  background: var(--track);
+  color: var(--muted2);
 }
 .solve-row strong {
   font-size: 20px;
@@ -1779,9 +1779,6 @@ b {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-.solve-item + .solve-item {
-  border-top: 1px solid var(--track);
 }
 .solve-no {
   min-width: 22px;
