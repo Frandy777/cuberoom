@@ -2,8 +2,9 @@
  * --p1…--p4 are reserved for players (avatars, seats, per-player stats, winners).
  * UI chrome uses a single --accent plus the state colors, none of which may
  * share a hue with a player color.
- * --track-pN backs a thumb drawn in --on-pN, so it steps away from that color:
- * lighter under a dark thumb, darker under a white one.
+ * A segmented track steps away from the color of the thumb sliding on it: lighter
+ * under a dark thumb, darker under a light one. --accent-track and --track-pN back
+ * thumbs drawn in --on-accent / --on-pN.
  */
 .t-classic {
   --bg: #f0eeea;
@@ -33,7 +34,7 @@
   --on-p4: #1a1816;
   --track-p4: color-mix(in oklab, var(--p4), white 22%);
   --accent: #1d3a9e;
-  --accent-deep: #172f82;
+  --accent-track: #172f82;
   --on-accent: #ffffff;
   --tag: #ffdcd9;
   --on-tag: #b3161b;
@@ -75,7 +76,7 @@
   --on-p4: #ffffff;
   --track-p4: color-mix(in oklab, var(--p4), black 12%);
   --accent: #d9ccff;
-  --accent-deep: #c4b3fa;
+  --accent-track: color-mix(in oklab, var(--accent), white 22%);
   --on-accent: #12130f;
   --tag: #ff9330;
   --on-tag: #12130f;
