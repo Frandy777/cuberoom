@@ -478,20 +478,7 @@ export default function App() {
           send={send}
           active={tab === 'timer' && !menu && !confirm && !editProfile}
         />
-        {tab === 'me' && (
-          <>
-            <Stats room={room} playerId={session!.playerId} personal />
-            <button
-              className="secondary"
-              onClick={() => {
-                setDraft(profile);
-                setEditProfile(true);
-              }}
-            >
-              Edit profile
-            </button>
-          </>
-        )}
+        {tab === 'me' && <Stats room={room} playerId={session!.playerId} personal />}
         {tab === 'battle' && <Stats room={room} playerId={session!.playerId} />}
         {allDone && room.phase !== 'finished' && (
           <div className="next-round">
