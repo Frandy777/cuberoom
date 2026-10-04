@@ -1,9 +1,8 @@
-import { useRef, useState, type CSSProperties } from 'react';
-import { Crown } from 'lucide-react';
-import type { RoomState } from '../../shared/protocol';
+import { useState, type CSSProperties } from 'react';
+import { Check, Crown, Eye, LogOut, WifiOff } from 'lucide-react';
+import type { Player, RoomState, Solve } from '../../shared/protocol';
 import { currentRound, roundDone } from '../../shared/protocol';
 import { solveTime, statistics, time, value, winners } from '../../shared/stats';
-import { useFlip } from '../motion';
 import { Thumb } from './Thumb';
 
 export function Stats({
@@ -16,8 +15,6 @@ export function Stats({
   personal?: boolean;
 }) {
   const [view, setView] = useState<'round' | 'session'>('round');
-  const liveRef = useRef<HTMLDivElement>(null);
-  useFlip(liveRef);
   const current = currentRound(room);
   const roster = new Map(
     room.history.flatMap((r) =>
@@ -36,7 +33,6 @@ export function Stats({
   const maxWins = Math.max(0, ...allStats.map((p) => p.wins));
   const completed = room.history.filter(roundDone).length;
   const showSession = personal || view === 'session' || room.phase === 'finished';
-  const ranked = [...(current?.solves ?? [])].sort((a, b) => value(a) - value(b));
   const doneCount = current?.solves.filter((s) => s.status === 'done').length ?? 0;
   return (
     <div className="stats-content">
@@ -85,48 +81,19 @@ export function Stats({
               ))}
             </div>
           </section>
-          <div className="live-round" ref={liveRef}>
-            {ranked.map((s, i) => {
-              const p = room.players.find((p) => p.id === s.playerId);
-              const win = winners(current).includes(s.playerId);
-              const note = !p
-                ? 'Left'
-                : !p.connected
-                  ? 'Offline'
-                  : s.status === 'done' && s.penalty !== 'none'
-                    ? s.penalty
-                    : '';
-              return (
-                <div
-                  className={`live-player ${win ? 'round-winner' : ''}`}
+          <div className="round-bento" data-count={current.solves.length}>
+            {[...current.solves]
+              .sort((a, b) => Number(b.playerId === playerId) - Number(a.playerId === playerId))
+              .map((s) => (
+                <PlayerTile
                   key={s.playerId}
-                  data-flip={s.playerId}
-                >
-                  <span className="rank mono">
-                    {s.status === 'done' && Number.isFinite(value(s)) ? i + 1 : ''}
-                  </span>
-                  <span className={`avatar color-${s.color}`}>{s.name[0]}</span>
-                  <b>{s.playerId === playerId ? 'You' : s.name}</b>
-                  {win && <Crown size={18} aria-label="Round winner" />}
-                  {note && <span className="tag">{note}</span>}
-                  {s.status === 'solving' && (
-                    <SpinnerArc className="solving" size={22} aria-label="Solving" />
-                  )}
-                  {s.status === 'done' && <strong className="mono">{time(value(s))}</strong>}
-                </div>
-              );
-            })}
+                  solve={s}
+                  player={room.players.find((p) => p.id === s.playerId)}
+                  you={s.playerId === playerId}
+                  win={winners(current).includes(s.playerId)}
+                />
+              ))}
           </div>
-          {!roundDone(current) && (
-            <p className="waiting-label">
-              <SpinnerArc size={18} />
-              Waiting for{' '}
-              {current.solves
-                .filter((s) => s.status !== 'done')
-                .map((s) => (s.playerId === playerId ? 'you' : s.name))
-                .join(', ')}
-            </p>
-          )}
         </>
       )}
       {showSession && (
@@ -221,6 +188,55 @@ export function Stats({
           {!personal && <RoundLog room={room} players={players} playerId={playerId} />}
         </>
       )}
+    </div>
+  );
+}
+
+const STATES = {
+  inspecting: { label: 'Inspecting', icon: <Eye size={22} aria-hidden /> },
+  solving: { label: 'Solving', icon: <SpinnerArc size={22} /> },
+  done: { label: 'Done', icon: <Check size={22} strokeWidth={3} aria-hidden /> },
+  offline: { label: 'Offline', icon: <WifiOff size={22} aria-hidden /> },
+  left: { label: 'Left', icon: <LogOut size={22} aria-hidden /> },
+};
+
+// A player who left is closed out as a DNF, so "left" wins over "done".
+function liveState(solve: Solve, player?: Player): keyof typeof STATES {
+  if (!player) return 'left';
+  if (solve.status === 'done') return 'done';
+  if (!player.connected) return 'offline';
+  return solve.status === 'solving' ? 'solving' : 'inspecting';
+}
+
+function PlayerTile({
+  solve,
+  player,
+  you,
+  win,
+}: {
+  solve: Solve;
+  player?: Player;
+  you: boolean;
+  win: boolean;
+}) {
+  const state = liveState(solve, player);
+  const { label, icon } = STATES[state];
+  return (
+    <div className={`bento-player is-${state} ${state === 'done' ? `color-${solve.color}` : ''}`}>
+      <div className="bento-who">
+        <span className={`avatar ${state === 'done' ? 'inverse' : `color-${solve.color}`}`}>
+          {solve.name[0]}
+        </span>
+        <b>{you ? 'You' : solve.name}</b>
+        {win && <Crown className="bento-crown" size={20} aria-label="Round winner" />}
+      </div>
+      <div className="bento-status">
+        {icon}
+        <div className="bento-label">
+          <strong>{label}</strong>
+          {solve.status === 'done' && <small className="mono">{solveTime(solve)}</small>}
+        </div>
+      </div>
     </div>
   );
 }

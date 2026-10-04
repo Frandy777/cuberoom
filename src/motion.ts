@@ -10,9 +10,8 @@ import {
   type RefObject,
 } from 'react';
 
-// Mirrors --ease-out / --ease-in-out in style.css; WAAPI can't read CSS variables.
+// Mirrors --ease-out in style.css; WAAPI can't read CSS variables.
 export const easeOut = 'cubic-bezier(0.23, 1, 0.32, 1)';
-export const easeInOut = 'cubic-bezier(0.77, 0, 0.175, 1)';
 
 export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -35,28 +34,6 @@ export function useEntrance(ref: RefObject<HTMLElement | null>, key: string) {
   useLayoutEffect(() => {
     [...(ref.current?.children ?? [])].forEach((el, i) => enter(el, Math.min(i, 6) * 40));
   }, [key]);
-}
-
-// FLIP: children with `data-flip` ids glide to their new slot when the list reorders.
-// `ref` must be positioned so offsetTop is relative to it.
-export function useFlip(ref: RefObject<HTMLElement | null>) {
-  const prev = useRef(new Map<string, number>());
-  useLayoutEffect(() => {
-    const next = new Map<string, number>();
-    for (const el of ref.current?.children ?? []) {
-      const id = (el as HTMLElement).dataset.flip;
-      if (!id) continue;
-      const top = (el as HTMLElement).offsetTop;
-      const before = prev.current.get(id);
-      next.set(id, top);
-      if (before !== undefined && before !== top && !reducedMotion())
-        el.animate?.([{ transform: `translateY(${before - top}px)` }, { transform: 'none' }], {
-          duration: 300,
-          easing: easeInOut,
-        });
-    }
-    prev.current = next;
-  });
 }
 
 // A brief scale bump when `value` increases.

@@ -1091,56 +1091,102 @@ b {
 .section-title .eyebrow {
   color: var(--muted);
 }
-.live-round {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.live-player {
-  min-height: 64px;
-  background: var(--surface);
-  border-radius: 22px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
+.round-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(156px, auto);
   gap: 12px;
 }
-.live-player .avatar {
+.round-bento[data-count='1'] > * {
+  grid-column: span 2;
+}
+.round-bento[data-count='2'] {
+  grid-auto-rows: minmax(196px, auto);
+}
+.round-bento[data-count='3'] > :first-child {
+  grid-row: span 2;
+}
+.bento-player {
+  min-width: 0;
+  border-radius: 28px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    background-color 300ms var(--ease-out),
+    color 300ms var(--ease-out);
+}
+.bento-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.bento-player .avatar {
   width: 36px;
   height: 36px;
   font-size: 14px;
 }
-.live-player b {
+.bento-who b {
   flex: 1;
   min-width: 0;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.live-player strong {
-  font-size: 20px;
-  font-weight: 800;
-}
-.live-player .tag {
+.bento-crown {
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 800;
-  background: var(--tag);
-  color: var(--on-tag);
-  border-radius: 999px;
-  padding: 3px 8px;
-}
-.round-winner > svg {
   transition:
     opacity 300ms var(--ease-out),
     transform 300ms var(--ease-out);
 }
-.live-player .solving {
-  flex-shrink: 0;
-  color: var(--solving);
+.bento-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+/* The time sits beside the label so finishing doesn't grow the tile. */
+.bento-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.bento-status strong {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.round-bento[data-count='1'] .bento-status strong {
+  font-size: 36px;
+}
+.bento-status small {
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+.bento-player.is-done {
+  background: var(--player);
+  color: var(--on-player);
+}
+.bento-player.is-inspecting .bento-status,
+.bento-player.is-solving .bento-status {
+  color: var(--wait);
+}
+.bento-player.is-offline .bento-status,
+.bento-player.is-left .bento-status {
+  color: var(--faint);
+}
+.bento-player.is-left {
+  background: var(--track);
 }
 .spinner-arc {
   animation: spin 1s linear infinite;
@@ -1563,27 +1609,6 @@ b {
 .round-bars i.filled::after {
   clip-path: inset(0);
 }
-.rank {
-  width: 18px;
-  flex-shrink: 0;
-  color: var(--muted);
-  font-size: 15px;
-  font-weight: 800;
-}
-.waiting-label {
-  min-height: 60px;
-  background: var(--track);
-  border-radius: 22px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  text-align: center;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--wait);
-}
 .personal-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1859,7 +1884,7 @@ b {
     opacity: 0;
     transform: scale(0.94);
   }
-  .round-winner > svg {
+  .bento-crown {
     opacity: 0;
     transform: rotate(-20deg) scale(0.9);
   }
@@ -1912,7 +1937,7 @@ b {
     .connection-banner,
     .next-round,
     .seat,
-    .round-winner > svg {
+    .bento-crown {
       transform: none;
     }
   }
