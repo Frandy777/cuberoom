@@ -1157,14 +1157,6 @@ b {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.wins {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 800;
-}
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

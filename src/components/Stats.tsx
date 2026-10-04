@@ -199,7 +199,6 @@ export function Stats({
                       <span className="avatar inverse">{p.name[0]}</span>
                       <b>{p.id === playerId ? 'You' : p.name}</b>
                     </div>
-                    <span className="wins">Wins {p.wins}</span>
                   </div>
                   <div className="metrics">
                     {[
