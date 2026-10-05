@@ -18,7 +18,9 @@ import {
   LogOut,
   MoreHorizontal,
   Plus,
+  QrCode as QrIcon,
   RefreshCw,
+  ScanQrCode,
   Share2,
   SlidersHorizontal,
   Swords,
@@ -46,6 +48,7 @@ import { PuzzleIcon } from './components/CubeNet';
 import { Stats } from './components/Stats';
 import { Timer } from './components/Timer';
 import { Thumb } from './components/Thumb';
+import { QrCode, Scanner, roomLink } from './components/Qr';
 import { Presence, useEntrance, useExiting, usePop } from './motion';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
@@ -199,6 +202,8 @@ export default function App() {
   const [confirm, setConfirm] = useState<'leave' | 'end' | null>(null);
   const [toast, setToast] = useState('');
   const [editProfile, setEditProfile] = useState(false);
+  const [qr, setQr] = useState(false);
+  const [scan, setScan] = useState(false);
   const [draft, setDraft] = useState(profile);
   const [updating, setUpdating] = useState(false);
   // On wide screens the timer stays up and the other tabs share a side panel beside it.
@@ -323,9 +328,7 @@ export default function App() {
   }
   async function copy(link = false) {
     try {
-      await navigator.clipboard.writeText(
-        link ? `${location.origin}/?room=${room!.code}` : room!.code,
-      );
+      await navigator.clipboard.writeText(link ? roomLink(room!.code) : room!.code);
       setToast(link ? 'Link copied' : 'Code copied');
     } catch {
       setError('Clipboard unavailable. Copy the room code manually.');
@@ -334,10 +337,7 @@ export default function App() {
   async function share() {
     if (!room) return;
     try {
-      if (navigator.share)
-        await navigator.share({
-          url: `${location.origin}/?room=${room.code}`,
-        });
+      if (navigator.share) await navigator.share({ url: roomLink(room.code) });
       else await copy(true);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError'))
@@ -472,6 +472,17 @@ export default function App() {
             spellCheck={false}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
           />
+          <button
+            type="button"
+            className="scan-button"
+            aria-label="Scan room QR code"
+            onClick={() => {
+              setError('');
+              setScan(true);
+            }}
+          >
+            <ScanQrCode size={24} />
+          </button>
           <button type="submit" className="join-button">
             Join
             <ArrowRight size={20} />
@@ -523,6 +534,10 @@ export default function App() {
             <button onClick={() => copy()}>
               <Copy size={17} />
               Copy
+            </button>
+            <button onClick={() => setQr(true)}>
+              <QrIcon size={17} />
+              QR
             </button>
             <button onClick={share}>
               <Share2 size={17} />
@@ -603,7 +618,7 @@ export default function App() {
           connected={connected}
           send={send}
           visible={timerShown}
-          active={timerShown && !menu && !confirm && !editProfile && !needRefresh}
+          active={timerShown && !menu && !confirm && !editProfile && !qr && !needRefresh}
         />
         {(split || tab !== 'timer') && (
           <Stats
@@ -721,6 +736,15 @@ export default function App() {
               <button aria-label="Copy room code" onClick={() => copy()}>
                 <Copy size={22} />
               </button>
+              <button
+                aria-label="Show room QR code"
+                onClick={() => {
+                  setMenu(false);
+                  setQr(true);
+                }}
+              >
+                <QrIcon size={22} />
+              </button>
               <button aria-label="Share room link" onClick={share}>
                 <Share2 size={22} />
               </button>
@@ -791,6 +815,29 @@ export default function App() {
             <button className="secondary" onClick={() => setConfirm(null)}>
               Keep playing
             </button>
+          </Modal>
+        )}
+      </Presence>
+      <Presence>
+        {qr && room && (
+          <Modal title="Scan to join" onClose={() => setQr(false)}>
+            <div className="qr-card">
+              <QrCode text={roomLink(room.code)} />
+              <strong className="mono">{room.code}</strong>
+            </div>
+          </Modal>
+        )}
+      </Presence>
+      <Presence>
+        {scan && !room && (
+          <Modal title="Scan to join" onClose={() => setScan(false)}>
+            <Scanner
+              onCode={(code) => {
+                setScan(false);
+                setRoomCode(code);
+                if (validProfile()) game.connect(code);
+              }}
+            />
           </Modal>
         )}
       </Presence>
