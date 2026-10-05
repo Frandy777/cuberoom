@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react';
 import type { ClientMessage, RoomState } from '../../shared/protocol';
 import { currentRound } from '../../shared/protocol';
 import { solveTime, statistics, time } from '../../shared/stats';
@@ -138,6 +147,16 @@ function useFullscreen(
   }, [solved]);
   return exiting;
 }
+// The ticking digits are the only nodes updated each animation frame; as a leaf
+// component subscribed to the clock, every tick re-renders a single text node
+// instead of the whole timer page.
+const TimerValue = memo(function TimerValue({
+  subscribeMs,
+  getMs,
+}: Pick<ReturnType<typeof useTimer>, 'subscribeMs' | 'getMs'>) {
+  const text = time(useSyncExternalStore(subscribeMs, getMs));
+  return <strong className={`timer-value ${text.length > 6 ? 'long-time' : ''}`}>{text}</strong>;
+});
 export function Timer({
   room,
   playerId,
@@ -158,7 +177,7 @@ export function Timer({
   const round = currentRound(room)!;
   const solve = round.solves.find((s) => s.playerId === playerId);
   const timer = useTimer(room.code, round.number, solve, connected, send);
-  const stats = statistics(room.history, playerId);
+  const stats = useMemo(() => statistics(room.history, playerId), [room.history, playerId]);
   const scrambleRef = useRef<HTMLParagraphElement>(null);
   const netRef = useRef<HTMLElement>(null);
   const padRef = useRef<HTMLElement>(null);
@@ -197,7 +216,7 @@ export function Timer({
     };
   }, [active, timer.down, timer.up, timer.cancel]);
   const finished = solve?.status === 'done' && !exiting;
-  const display = finished ? solveTime(solve) : time(timer.ms);
+  const finalTime = finished ? solveTime(solve) : '';
   return (
     <div
       className="timer-page"
@@ -243,8 +262,8 @@ export function Timer({
       ) : finished ? (
         <section className="timer-pad solved" aria-label="Your time" ref={padRef}>
           <div className="solved-time">
-            <strong className={`timer-value ${display.length > 6 ? 'long-time' : ''}`}>
-              {display.replace(/\+$/, '')}
+            <strong className={`timer-value ${finalTime.length > 6 ? 'long-time' : ''}`}>
+              {finalTime.replace(/\+$/, '')}
             </strong>
             {solve.penalty === '+2' && <span className="plus">+</span>}
           </div>
@@ -300,9 +319,7 @@ export function Timer({
             }
           }}
         >
-          <strong className={`timer-value ${display.length > 6 ? 'long-time' : ''}`}>
-            {display}
-          </strong>
+          <TimerValue subscribeMs={timer.subscribeMs} getMs={timer.getMs} />
           {timer.mode !== 'running' && (
             <span>
               {timer.mode === 'armed'

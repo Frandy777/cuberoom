@@ -19,7 +19,14 @@ export function useTimer(
     }
   };
   const data = useRef(initial());
-  const [ms, setMs] = useState(data.current?.ms ?? 0);
+  // The clock lives outside React state: ticking ~60×/s would re-render the whole
+  // timer. Only the digits subscribe, through getMs/subscribeMs (see TimerValue).
+  const ms = useRef(data.current?.ms ?? 0);
+  const listeners = useRef(new Set<() => void>());
+  const setMs = (v: number) => {
+    ms.current = v;
+    for (const l of listeners.current) l();
+  };
   const [mode, setMode] = useState<'idle' | 'holding' | 'armed' | 'running' | 'stopped'>(
     data.current ? (data.current.ms !== undefined ? 'stopped' : 'running') : 'idle',
   );
@@ -94,5 +101,20 @@ export function useTimer(
     window.addEventListener('blur', cancel);
     return () => window.removeEventListener('blur', cancel);
   }, [cancel]);
-  return { ms, mode, down, up, cancel, lost: solve?.status === 'solving' && !data.current };
+  const subscribeMs = useCallback((onChange: () => void) => {
+    listeners.current.add(onChange);
+    return () => {
+      listeners.current.delete(onChange);
+    };
+  }, []);
+  const getMs = useCallback(() => ms.current, []);
+  return {
+    getMs,
+    subscribeMs,
+    mode,
+    down,
+    up,
+    cancel,
+    lost: solve?.status === 'solving' && !data.current,
+  };
 }

@@ -63,7 +63,7 @@ describe('client performance timer', () => {
     expect(send).toHaveBeenCalledWith({ type: 'start', round: 1 });
     now = 14350;
     act(() => timer.down());
-    expect(timer.ms).toBe(13000);
+    expect(timer.getMs()).toBe(13000);
     expect(timer.mode).toBe('stopped');
     expect(send).toHaveBeenLastCalledWith({ type: 'finish', round: 1, ms: 13000 });
   });
@@ -104,7 +104,7 @@ describe('client performance timer', () => {
     render();
     expect(timer.mode).toBe('running');
     act(() => timer.down());
-    expect(timer.ms).toBe(8000);
+    expect(timer.getMs()).toBe(8000);
     solve.status = 'done';
     solve.ms = 8000;
     render();
