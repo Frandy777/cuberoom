@@ -2063,3 +2063,374 @@ b {
     opacity: 1;
   }
 }
+
+/* The Space hint on the timer pad only shows with a keyboard and mouse; see below. */
+.key-hint {
+  display: none;
+}
+
+/* Tablet and desktop. Phones, including phones in landscape (too short for this), keep the
+   single column above. Here the app fills the window and each view lays its cards out in a
+   grid; the cards stay direct children of .page, so the mobile DOM and entrances are the
+   same. */
+@media (min-width: 768px) and (min-height: 600px) {
+  html {
+    background: var(--bg);
+  }
+  .app {
+    max-width: 1280px;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: max(32px, env(safe-area-inset-top)) max(40px, env(safe-area-inset-right))
+      max(32px, env(safe-area-inset-bottom)) max(40px, env(safe-area-inset-left));
+    gap: 16px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .view-home,
+  .view-lobby,
+  .view-create,
+  .view-settings {
+    flex: 1;
+    display: grid;
+    gap: 16px;
+  }
+  .page > .header {
+    grid-column: 1 / -1;
+  }
+  .view-connecting > .connecting {
+    width: 100%;
+    max-width: 440px;
+    align-self: center;
+  }
+
+  /* Home: the hero on the left, everything you do on the right. */
+  .view-home {
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+  }
+  .view-home:has(> .ended) {
+    grid-template-rows: auto auto auto auto 1fr;
+  }
+  .view-home > .hero {
+    grid-column: 1;
+    grid-row: 2 / -1;
+    min-height: 0;
+    padding: 36px;
+    border-radius: 40px;
+  }
+  .view-home > :not(.header, .hero) {
+    grid-column: 2;
+  }
+  .hero h1 {
+    font-size: clamp(56px, 6.2vw, 92px);
+    max-width: none;
+  }
+  /* Sized to the hero, offset by its own size, so it sits like the phone's at any shape. */
+  .hero-cube {
+    width: min(68%, 600px);
+    right: -14%;
+    top: 0;
+    translate: 0 -18%;
+    gap: 4%;
+  }
+  .hero-cube i {
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 24%;
+  }
+  .puzzle-tags span {
+    font-size: 15px;
+    padding: 8px 14px;
+  }
+  .view-home > .create-card {
+    min-height: 0;
+    padding: 28px;
+    border-radius: 32px;
+  }
+  .create-card > span {
+    font-size: 44px;
+  }
+
+  /* Lobby: the code to share on the left, the seats filling up on the right. */
+  .view-lobby {
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.25fr);
+    grid-template-rows: auto 1fr auto auto;
+  }
+  .view-lobby > :not(.header, .seats) {
+    grid-column: 1;
+  }
+  .view-lobby > .seats {
+    grid-column: 2;
+    grid-row: 2 / -1;
+    grid-template-rows: repeat(2, minmax(160px, 1fr));
+    gap: 16px;
+  }
+  .view-lobby > .room-code-card {
+    justify-content: space-between;
+    padding: 32px;
+    border-radius: 40px;
+  }
+  .view-lobby .room-code {
+    font-size: clamp(44px, 6.4vw, 96px);
+  }
+  .seat {
+    padding: 22px;
+    border-radius: 32px;
+  }
+  .seat b {
+    font-size: 32px;
+  }
+  .empty-seat {
+    border-radius: 32px;
+  }
+
+  /* Room setup: puzzles stacked on the left, rounds on the right. */
+  .view-create,
+  .view-settings {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    grid-template-rows: auto 1fr auto;
+  }
+  .view-create > .puzzle-picker,
+  .view-settings > .puzzle-picker {
+    grid-column: 1;
+    grid-row: 2 / -1;
+    flex-direction: column;
+    border-radius: 32px;
+  }
+  .puzzle-picker button {
+    height: auto;
+    min-height: 120px;
+    font-size: 22px;
+    gap: 16px;
+  }
+  .puzzle-picker .puzzle-icon {
+    width: 60px;
+    height: 60px;
+  }
+  .view-create > :not(.header, .puzzle-picker),
+  .view-settings > :not(.header, .puzzle-picker) {
+    grid-column: 2;
+  }
+  .view-create > .round-picker,
+  .view-settings > .round-picker {
+    min-height: 0;
+  }
+  .round-count strong {
+    font-size: clamp(132px, 13vw, 180px);
+  }
+
+  /* Room on a tablet: the mobile tabs, centred at a comfortable width. */
+  .view-room > * {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+  .view-room > .room-nav {
+    max-width: 520px;
+    bottom: max(32px, env(safe-area-inset-bottom));
+  }
+  .stats-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stats-content > * {
+    grid-column: 1 / -1;
+  }
+  .stats-content > .stat-player {
+    grid-column: auto;
+  }
+  .personal-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* The time scales with the pad rather than the window. */
+  .timer-pad {
+    container-type: inline-size;
+  }
+  .timer-value {
+    font-size: min(128px, 21cqi);
+  }
+  .timer-value.long-time {
+    font-size: min(96px, 15cqi);
+  }
+  .timer-pad.running .timer-value,
+  .timer-pad.exiting .timer-value {
+    font-size: min(24cqi, 40vh);
+  }
+  .timer-pad.running .timer-value.long-time,
+  .timer-pad.exiting .timer-value.long-time {
+    font-size: min(17cqi, 30vh);
+  }
+}
+
+/* Portrait tablets are tall but narrow, so home and the lobby stack instead: the hero over a
+   row of actions, and the room code over the seats. */
+@media (min-width: 768px) and (min-height: 600px) and (orientation: portrait) {
+  .view-home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'header header'
+      'hero hero'
+      'profile create'
+      'join create';
+  }
+  .view-home:has(> .ended) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'header header'
+      'ended ended'
+      'hero hero'
+      'profile create'
+      'join create';
+  }
+  .view-home > .ended {
+    grid-area: ended;
+  }
+  .view-home > .hero {
+    grid-area: hero;
+  }
+  .view-home > .profile-editor {
+    grid-area: profile;
+  }
+  .view-home > .join-form {
+    grid-area: join;
+  }
+  .view-home > .create-card {
+    grid-area: create;
+  }
+  .view-lobby {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto;
+  }
+  .view-lobby > .seats {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .view-lobby .room-code {
+    font-size: clamp(44px, 10vw, 96px);
+  }
+}
+
+@media (min-width: 768px) and (min-height: 600px) and (hover: hover) and (pointer: fine) {
+  .key-hint {
+    display: block;
+    font:
+      700 11px JetBrains,
+      monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1.5px currentColor;
+    opacity: 0.5;
+  }
+  .timer-pad.exiting > .key-hint {
+    display: none;
+  }
+}
+
+/* Desktop and tablets in landscape: the timer stays up on the left while the round, stats and
+   standings share a panel on the right that scrolls on its own. Mirrors SPLIT in
+   useMediaQuery.ts. */
+@media (min-width: 1000px) and (min-height: 600px) {
+  .app:has(> .view-room) {
+    max-width: 1600px;
+    height: 100svh;
+    min-height: 0;
+  }
+  .view-room {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 480px);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 16px 24px;
+  }
+  .view-room > * {
+    max-width: none;
+    margin-inline: 0;
+  }
+  .view-room > .room-header {
+    grid-column: 1 / -1;
+  }
+  .view-room > .timer-page {
+    grid-column: 1;
+    grid-row: 2 / -1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(200px, 19vw, 280px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'scramble scramble'
+      'pad net'
+      'pad stats';
+    gap: 16px;
+  }
+  .view-room .preview-row {
+    display: contents;
+  }
+  .view-room .scramble {
+    grid-area: scramble;
+    padding: 20px 24px;
+  }
+  .view-room .scramble p {
+    font-size: 20px;
+  }
+  .view-room .net-card {
+    grid-area: net;
+  }
+  .view-room .cube-net {
+    max-width: 248px;
+  }
+  .view-room .mini-stats {
+    grid-area: stats;
+  }
+  .view-room .mini-stat {
+    min-height: 104px;
+  }
+  .view-room .timer-pad {
+    grid-area: pad;
+    min-height: 0;
+  }
+  .view-room > .room-nav {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+    bottom: auto;
+    margin: 0;
+    container-type: inline-size;
+  }
+  /* Equal tabs, so the thumb lines up even if a label runs long. */
+  .room-nav button {
+    min-width: 0;
+  }
+  /* Icon and label side by side once the panel is wide enough; narrower, the tabs stack
+     like the phone's so the badge doesn't crowd the edge. */
+  @container (min-width: 400px) {
+    .room-nav button {
+      flex-direction: row;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .nav-badge {
+      position: static;
+    }
+  }
+  .view-room > .stats-content {
+    grid-column: 2;
+    grid-row: 3;
+    display: flex;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    border-radius: 28px;
+  }
+  .personal-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

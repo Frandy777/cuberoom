@@ -316,6 +316,8 @@ export function Timer({
                       : 'Hold to start'}
             </span>
           )}
+          {/* Shown only with a keyboard-and-mouse layout; see style.css. */}
+          {timer.mode !== 'running' && <kbd className="key-hint">Space</kbd>}
         </button>
       )}
     </div>

@@ -38,6 +38,7 @@ import {
   type Settings,
 } from '../shared/protocol';
 import { useRoom } from './hooks/useRoom';
+import { SPLIT, useMediaQuery } from './hooks/useMediaQuery';
 import { faceColors } from './cube';
 import { generateScramble } from './scramble';
 import { Setup } from './components/Setup';
@@ -200,6 +201,10 @@ export default function App() {
   const [editProfile, setEditProfile] = useState(false);
   const [draft, setDraft] = useState(profile);
   const [updating, setUpdating] = useState(false);
+  // On wide screens the timer stays up and the other tabs share a side panel beside it.
+  const split = useMediaQuery(SPLIT);
+  const side = tab === 'timer' ? 'round' : tab;
+  const timerShown = split || tab === 'timer';
   const game = useRoom(profile);
   const { room, session, status, error, setError, send } = game;
   const roomRef = useRef(room);
@@ -361,6 +366,14 @@ export default function App() {
       ))}
     </div>
   );
+  const tabs = (
+    [
+      { id: 'timer', label: 'Timer', Icon: TimerIcon },
+      { id: 'round', label: 'Round', Icon: Swords },
+      { id: 'stats', label: 'Stats', Icon: ChartLine },
+      { id: 'standings', label: 'Standings', Icon: Trophy },
+    ] as const
+  ).filter((t) => !split || t.id !== 'timer');
   let content: ReactNode;
   if (game.connecting)
     content = (
@@ -589,14 +602,14 @@ export default function App() {
           playerId={session!.playerId}
           connected={connected}
           send={send}
-          visible={tab === 'timer'}
-          active={tab === 'timer' && !menu && !confirm && !editProfile && !needRefresh}
+          visible={timerShown}
+          active={timerShown && !menu && !confirm && !editProfile && !needRefresh}
         />
-        {tab !== 'timer' && (
+        {(split || tab !== 'timer') && (
           <Stats
             room={room}
             playerId={session!.playerId}
-            view={tab}
+            view={side}
             action={
               allDone &&
               room.phase !== 'finished' && (
@@ -612,23 +625,20 @@ export default function App() {
         )}
         <nav className="room-nav" aria-label="Room">
           <Thumb
-            index={['timer', 'round', 'stats', 'standings'].indexOf(tab)}
-            count={4}
+            index={tabs.findIndex((t) => t.id === (split ? side : tab))}
+            count={tabs.length}
             pad={8}
             gap={6}
           />
-          {(
-            [
-              { id: 'timer', label: 'Timer', Icon: TimerIcon },
-              { id: 'round', label: 'Round', Icon: Swords },
-              { id: 'stats', label: 'Stats', Icon: ChartLine },
-              { id: 'standings', label: 'Standings', Icon: Trophy },
-            ] as const
-          ).map(({ id, label, Icon }) => (
+          {tabs.map(({ id, label, Icon }) => (
             <button
               key={id}
-              aria-current={tab === id ? 'page' : undefined}
-              onClick={() => setTab(id)}
+              aria-current={(split ? side : tab) === id ? 'page' : undefined}
+              onClick={(e) => {
+                setTab(id);
+                // A clicked tab keeps focus, which would swallow Space meant for the timer.
+                if (split && e.detail) e.currentTarget.blur();
+              }}
             >
               <Icon size={22} />
               {label}
@@ -659,7 +669,7 @@ export default function App() {
           </button>
         </div>
       )}
-      <div className="page" ref={pageRef}>
+      <div className={`page view-${view}`} ref={pageRef}>
         {content}
       </div>
       {splash !== undefined && (
@@ -679,7 +689,7 @@ export default function App() {
       <Presence ms={400}>{toast && <Toast text={toast} />}</Presence>
       <Presence>
         {host &&
-          tab === 'timer' &&
+          (split ? side !== 'round' : tab === 'timer') &&
           allDone &&
           room?.phase !== 'finished' &&
           round &&
