@@ -129,6 +129,24 @@ describe('room state and authority', () => {
     applyMessage(r, r.players[0], { type: 'finish', round: 1, ms: 2 });
     expect(currentRound(r)?.solves[0].ms).toBe(12345);
   });
+  it('reports no-op messages so the server can skip the broadcast', () => {
+    const r = room();
+    const [a] = r.players;
+    expect(applyMessage(r, a, { type: 'settings', event: '333', rounds: 5 })).toBe(false);
+    expect(applyMessage(r, a, { type: 'settings', event: '222', rounds: 5 })).toBe(true);
+    expect(applyMessage(r, a, { type: 'profile', name: 'A', color: 1 })).toBe(false);
+    next(r);
+    expect(applyMessage(r, a, { type: 'start', round: 1 })).toBe(true);
+    expect(applyMessage(r, a, { type: 'start', round: 1 })).toBe(false);
+    expect(applyMessage(r, a, { type: 'finish', round: 1, ms: 12345 })).toBe(true);
+    expect(applyMessage(r, a, { type: 'finish', round: 1, ms: 12345 })).toBe(false);
+    expect(applyMessage(r, a, { type: 'penalty', round: 1, penalty: 'none' })).toBe(false);
+    expect(applyMessage(r, a, { type: 'penalty', round: 1, penalty: '+2' })).toBe(true);
+    expect(applyMessage(r, a, { type: 'penalty', round: 1, penalty: '+2' })).toBe(false);
+    expect(applyMessage(r, a, { type: 'profile', name: 'A', color: 1 })).toBe(false);
+    expect(applyMessage(r, a, { type: 'profile', name: 'A2', color: 1 })).toBe(true);
+    expect(currentRound(r)?.solves[0].name).toBe('A2');
+  });
   it('late joiners participate starting with the next round', () => {
     const r = room();
     next(r);

@@ -31,7 +31,7 @@ export function removePlayer(room: RoomState, id: string) {
   }
   if (room.hostId === id) room.hostId = room.players[0]?.id ?? '';
 }
-export function applyMessage(room: RoomState, player: Player, msg: ClientMessage) {
+export function applyMessage(room: RoomState, player: Player, msg: ClientMessage): boolean {
   const round = currentRound(room);
   const solve = round?.solves.find((s) => s.playerId === player.id);
   if ('round' in msg && msg.round !== (round?.number ?? 0))
@@ -40,6 +40,7 @@ export function applyMessage(room: RoomState, player: Player, msg: ClientMessage
     case 'settings':
       if (room.hostId !== player.id || room.phase !== 'lobby')
         throw new Error('Only the host can change settings before the match.');
+      if (room.event === msg.event && room.rounds === msg.rounds) return false;
       room.event = msg.event;
       room.rounds = msg.rounds;
       break;
@@ -80,23 +81,30 @@ export function applyMessage(room: RoomState, player: Player, msg: ClientMessage
       break;
     case 'start':
       if (room.phase !== 'playing' || !solve) throw new Error('Cannot start this solve.');
-      if (solve.status !== 'ready') break; // Idempotent replay after reconnect.
+      if (solve.status !== 'ready') return false; // Idempotent replay after reconnect.
       solve.status = 'solving';
       break;
     case 'finish':
       if (room.phase !== 'playing' || !solve || solve.status === 'ready')
         throw new Error('Start the timer first.');
       // A reconnect may replay the same finish. Never overwrite an accepted result.
-      if (solve.status === 'done') break;
+      if (solve.status === 'done') return false;
       solve.status = 'done';
       solve.ms = msg.ms;
       break;
     case 'penalty':
       if (room.phase !== 'playing' || !solve || solve.status !== 'done')
         throw new Error('Only completed solves in the current round can be edited.');
+      if (solve.penalty === msg.penalty) return false;
       solve.penalty = msg.penalty;
       break;
     case 'profile':
+      if (
+        player.name === msg.name &&
+        player.color === msg.color &&
+        (!solve || (solve.name === msg.name && solve.color === msg.color))
+      )
+        return false;
       player.name = msg.name;
       player.color = msg.color;
       if (solve) {
@@ -107,4 +115,5 @@ export function applyMessage(room: RoomState, player: Player, msg: ClientMessage
     default:
       throw new Error('Unsupported action.');
   }
+  return true;
 }

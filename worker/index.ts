@@ -123,21 +123,34 @@ export class CubeRoom extends DurableObject<Env> {
   private async schedule() {
     await this.ctx.storage.setAlarm(Date.now() + 15_000);
   }
-  private send(ws: WebSocket, msg: ServerMessage) {
+  private sendRaw(ws: WebSocket, payload: string): boolean {
     try {
-      ws.send(JSON.stringify(msg));
+      ws.send(payload);
+      return true;
     } catch {
-      this.disconnect(ws);
+      return false;
     }
+  }
+  private send(ws: WebSocket, msg: ServerMessage): boolean {
+    if (this.sendRaw(ws, JSON.stringify(msg))) return true;
+    this.disconnect(ws);
+    return false;
   }
   private commit() {
     this.save();
     this.broadcast();
   }
   private broadcast() {
-    if (this.room)
-      for (const [ws, c] of this.sockets)
-        if (c.joined) this.send(ws, { type: 'state', room: this.room });
+    if (!this.room) return;
+    const recipients = [...this.sockets].filter(([, c]) => c.joined).map(([ws]) => ws);
+    if (!recipients.length) return;
+    const payload = JSON.stringify({ type: 'state', room: this.room } satisfies ServerMessage);
+    const failed = recipients.filter((ws) => !this.sendRaw(ws, payload));
+    // Finish sending this snapshot before a failed send changes the room. Otherwise
+    // recursive broadcasts can send an older snapshot after the offline update.
+    let changed = false;
+    for (const ws of failed) changed = this.disconnect(ws, false) || changed;
+    if (changed) this.commit();
   }
   async fetch(req: Request): Promise<Response> {
     if (new URL(req.url).pathname === '/create') {
@@ -202,6 +215,7 @@ export class CubeRoom extends DurableObject<Env> {
         if (c.joined) throw new Error('Already in this room.');
         let player: Player | undefined;
         let token = msg.token;
+        let changed = !token;
         if (token) {
           player = room.players.find((p) => p.id === this.tokens.get(token!));
           if (!player) {
@@ -213,6 +227,7 @@ export class CubeRoom extends DurableObject<Env> {
             ws.close(4001, 'Session expired');
             return;
           }
+          changed = !player.connected;
           for (const [old, state] of this.sockets)
             if (state.id === player.id) {
               this.sockets.delete(old);
@@ -248,11 +263,15 @@ export class CubeRoom extends DurableObject<Env> {
         player.disconnectedAt = null;
         c.id = player.id;
         c.joined = true;
-        this.send(ws, {
-          type: 'welcome',
-          session: { code: room.code, playerId: player.id, token: token! },
-        });
-        this.commit();
+        if (
+          !this.send(ws, {
+            type: 'welcome',
+            session: { code: room.code, playerId: player.id, token: token! },
+          })
+        )
+          return;
+        if (changed) this.commit();
+        else this.send(ws, { type: 'state', room });
         return;
       }
       if (!c.joined) throw new Error('Join the room first.');
@@ -276,8 +295,8 @@ export class CubeRoom extends DurableObject<Env> {
         this.destroy('The host ended the room. All results cleared.');
         return;
       }
-      applyMessage(room, player, msg);
-      this.commit();
+      if (applyMessage(room, player, msg)) this.commit();
+      else this.send(ws, { type: 'state', room });
     } catch (error) {
       this.send(ws, {
         type: 'error',
@@ -290,15 +309,15 @@ export class CubeRoom extends DurableObject<Env> {
     if (this.room) removePlayer(this.room, id);
     for (const [token, playerId] of this.tokens) if (playerId === id) this.tokens.delete(token);
   }
-  private disconnect(ws: WebSocket) {
+  private disconnect(ws: WebSocket, commit = true): boolean {
     const c = this.sockets.get(ws);
     this.sockets.delete(ws);
     const player = this.room?.players.find((p) => p.id === c?.id);
-    if (player) {
-      player.connected = false;
-      player.disconnectedAt = Date.now();
-      this.commit();
-    }
+    if (!player?.connected) return false;
+    player.connected = false;
+    player.disconnectedAt = Date.now();
+    if (commit) this.commit();
+    return true;
   }
   private destroy(reason: string) {
     this.room = null;
@@ -312,10 +331,11 @@ export class CubeRoom extends DurableObject<Env> {
   }
   async alarm() {
     if (!this.room) return;
+    let changed = false;
     for (const [ws, c] of this.sockets)
       if (Date.now() - c.lastSeen > (c.joined ? 45_000 : 10_000)) {
+        changed = this.disconnect(ws, false) || changed;
         ws.close(4000, 'Heartbeat timeout');
-        this.disconnect(ws);
       }
     const expired = expiredPlayers(this.room, Date.now());
     for (const id of expired) this.remove(id);
@@ -323,8 +343,7 @@ export class CubeRoom extends DurableObject<Env> {
       this.destroy('Room ended.');
       return;
     }
-    if (expired.length) this.commit();
-    else this.broadcast();
+    if (changed || expired.length) this.commit();
     await this.schedule();
   }
 }
