@@ -73,6 +73,25 @@ describe('room state and authority', () => {
       applyMessage(r, r.players[1], { type: 'settings', event: '222', rounds: null }),
     ).toThrow();
   });
+  it('lets only the host restart a finished session with the same players', () => {
+    const r = room();
+    r.rounds = 1;
+    next(r);
+    expect(() => applyMessage(r, r.players[0], { type: 'restart' })).toThrow('Finish');
+    for (const p of r.players) {
+      applyMessage(r, p, { type: 'start', round: 1 });
+      applyMessage(r, p, { type: 'finish', round: 1, ms: 1000 });
+    }
+    next(r);
+    expect(r.phase).toBe('finished');
+    expect(() => applyMessage(r, r.players[1], { type: 'restart' })).toThrow('host');
+    applyMessage(r, r.players[0], { type: 'restart' });
+    expect(r).toMatchObject({ code: 'ABC234', phase: 'lobby', history: [], hostId: 'a' });
+    expect(r.players.map((p) => p.id)).toEqual(['a', 'b']);
+    applyMessage(r, r.players[0], { type: 'settings', event: '222', rounds: 3 });
+    applyMessage(r, r.players[0], { type: 'next', round: 0, scramble: 'R U' });
+    expect(currentRound(r)?.number).toBe(1);
+  });
   it('records unfinished departures as DNF and transfers the host in join order', () => {
     const r = room();
     next(r);

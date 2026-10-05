@@ -182,6 +182,10 @@ export function useRoom(profile: Profile) {
         }
         if (msg.type === 'state') {
           setRoom(msg.room);
+          // A restarted session reuses round numbers; drop timers saved for the old ones.
+          if (!msg.room.history.length)
+            for (const key of Object.keys(sessionStorage))
+              if (key.startsWith('timer:')) sessionStorage.removeItem(key);
           const round = msg.room.history.at(-1),
             solve = round?.solves.find((s) => s.playerId === sessionRef.current?.playerId);
           outbox.current = outbox.current.filter(

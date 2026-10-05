@@ -20,6 +20,7 @@ import {
   Plus,
   QrCode as QrIcon,
   RefreshCw,
+  RotateCcw,
   ScanQrCode,
   Share2,
   SlidersHorizontal,
@@ -199,7 +200,7 @@ export default function App() {
   const [tab, setTab] = useState<'timer' | 'round' | 'stats' | 'standings'>('timer');
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [confirm, setConfirm] = useState<'leave' | 'end' | null>(null);
+  const [confirm, setConfirm] = useState<'leave' | 'end' | 'restart' | null>(null);
   const [toast, setToast] = useState('');
   const [editProfile, setEditProfile] = useState(false);
   const [qr, setQr] = useState(false);
@@ -280,6 +281,8 @@ export default function App() {
   }, [room?.code, round?.number]);
   useEffect(() => {
     if (room?.phase === 'finished') setTab('standings');
+    // A restarted session begins on the timer, not the old standings.
+    if (room?.phase === 'lobby') setTab('timer');
   }, [room?.phase]);
   function validProfile() {
     const r = profileSchema.safeParse(profile);
@@ -626,14 +629,26 @@ export default function App() {
             playerId={session!.playerId}
             view={side}
             action={
-              allDone &&
-              room.phase !== 'finished' && (
+              room.phase === 'finished' ? (
                 <div className="next-round">
-                  <button className="primary" disabled={!canAdvance} onClick={advance}>
-                    {host ? nextLabel : 'Waiting for host'}
-                    {host && <ArrowRight size={26} />}
+                  <button
+                    className="primary"
+                    disabled={!host || !connected}
+                    onClick={() => setConfirm('restart')}
+                  >
+                    {host ? 'New session' : 'Waiting for host'}
+                    {host && <RotateCcw size={24} />}
                   </button>
                 </div>
+              ) : (
+                allDone && (
+                  <div className="next-round">
+                    <button className="primary" disabled={!canAdvance} onClick={advance}>
+                      {host ? nextLabel : 'Waiting for host'}
+                      {host && <ArrowRight size={26} />}
+                    </button>
+                  </div>
+                )
               )
             }
           />
@@ -774,6 +789,18 @@ export default function App() {
               <LogOut size={22} />
               <b>Leave room</b>
             </button>
+            {host && room.phase === 'finished' && (
+              <button
+                className="menu-item"
+                onClick={() => {
+                  setMenu(false);
+                  setConfirm('restart');
+                }}
+              >
+                <RotateCcw size={22} />
+                <b>New session</b>
+              </button>
+            )}
             {host && (
               <button
                 className="menu-item danger"
@@ -792,13 +819,21 @@ export default function App() {
       <Presence>
         {confirm && (
           <Modal
-            title={confirm === 'end' ? 'End room?' : 'Leave room?'}
+            title={
+              confirm === 'end'
+                ? 'End room?'
+                : confirm === 'restart'
+                  ? 'Start a new session?'
+                  : 'Leave room?'
+            }
             onClose={() => setConfirm(null)}
           >
             <p>
               {confirm === 'end'
                 ? 'All players will leave and all results will be cleared.'
-                : 'An unfinished solve will be marked DNF.'}
+                : confirm === 'restart'
+                  ? 'Everyone stays in the room. All results from this session will be cleared.'
+                  : 'An unfinished solve will be marked DNF.'}
             </p>
             <button
               className={confirm === 'end' ? 'danger-button' : 'primary'}
@@ -806,14 +841,18 @@ export default function App() {
                 if (connected) send({ type: confirm });
                 else if (confirm === 'leave') game.clear('');
                 setConfirm(null);
-                setPage('home');
+                if (confirm !== 'restart') setPage('home');
               }}
-              disabled={confirm === 'end' && !connected}
+              disabled={confirm !== 'leave' && !connected}
             >
-              {confirm === 'end' ? 'End room' : 'Leave room'}
+              {confirm === 'end'
+                ? 'End room'
+                : confirm === 'restart'
+                  ? 'New session'
+                  : 'Leave room'}
             </button>
             <button className="secondary" onClick={() => setConfirm(null)}>
-              Keep playing
+              {confirm === 'restart' ? 'Cancel' : 'Keep playing'}
             </button>
           </Modal>
         )}

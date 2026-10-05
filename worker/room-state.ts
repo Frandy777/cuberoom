@@ -71,6 +71,13 @@ export function applyMessage(room: RoomState, player: Player, msg: ClientMessage
       });
       room.phase = 'playing';
       break;
+    case 'restart':
+      if (room.hostId !== player.id) throw new Error('Only the host can start a new session.');
+      if (room.phase !== 'finished') throw new Error('Finish the current session first.');
+      // Same code and players; the previous session's results are discarded.
+      room.history = [];
+      room.phase = 'lobby';
+      break;
     case 'start':
       if (room.phase !== 'playing' || !solve) throw new Error('Cannot start this solve.');
       if (solve.status !== 'ready') break; // Idempotent replay after reconnect.

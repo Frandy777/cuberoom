@@ -13,7 +13,8 @@ export function Stats({
   room: RoomState;
   playerId: string;
   view: 'stats' | 'round' | 'standings';
-  // Leads the round view, e.g. the host's "Next round" once everyone is done.
+  // Leads the round view, e.g. the host's "Next round" once everyone is done,
+  // and the final standings, e.g. the host's "New session".
   action?: ReactNode;
 }) {
   const personal = view === 'stats';
@@ -92,6 +93,7 @@ export function Stats({
         <>
           {!personal && (
             <>
+              {room.phase === 'finished' && action}
               <div className="session-summary">
                 <div className="session-rounds">
                   <small>Rounds</small>
