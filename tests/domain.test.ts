@@ -3,8 +3,10 @@ import {
   IDLE_TTL,
   LOBBY_GRACE,
   MATCH_GRACE,
+  MIN_SWEEP_DELAY,
   applyMessage,
   expiredPlayers,
+  nextDeadline,
   removePlayer,
   roomIdle,
 } from '../worker/room-state';
@@ -223,6 +225,47 @@ describe('validation and statistics', () => {
     expect(time(60001)).toBe('1:00.00');
     expect(time(null)).toBe('—');
     expect(time(Infinity)).toBe('DNF');
+  });
+});
+describe('alarm scheduling', () => {
+  it('schedules nothing when no work is left', () => {
+    // A dissolved room ends the chain: there is nothing left to wake up for.
+    expect(nextDeadline(null, [], 1000)).toBeNull();
+    // Everyone online and no socket to time out, so no deadline exists to renew on.
+    expect(nextDeadline(room(), [], 1000)).toBeNull();
+  });
+  it('waits for the exact expiry instead of polling for it', () => {
+    const r = room();
+    Object.assign(r.players[0], { connected: false, disconnectedAt: 1000 });
+    // One player online and one away: only the grace expiry is pending, and it ends
+    // itself by removing that player, so waiting for it cannot renew anything.
+    expect(nextDeadline(r, [], 1000)).toBe(1000 + LOBBY_GRACE);
+    r.phase = 'playing';
+    expect(nextDeadline(r, [], 1000)).toBe(1000 + MATCH_GRACE);
+    expect(nextDeadline(r, [{ joined: true, lastSeen: 1000 }], 1000 + MATCH_GRACE - 30_000)).toBe(
+      1000 + MATCH_GRACE,
+    );
+  });
+  it('checks silent sockets once a minute, however long they have been quiet', () => {
+    const r = room();
+    Object.assign(r.players[0], { connected: false, disconnectedAt: 1000 });
+    r.phase = 'playing';
+    for (const lastSeen of [1000, -60_000])
+      expect(nextDeadline(r, [{ joined: true, lastSeen }], 1000)).toBe(1000 + MIN_SWEEP_DELAY);
+    expect(nextDeadline(r, [{ joined: false, lastSeen: 1000 }], 1000)).toBe(1000 + MIN_SWEEP_DELAY);
+  });
+  it('ends the chain at dissolution, timed from the last player to drop', () => {
+    const r = room();
+    Object.assign(r.players[0], { connected: false, disconnectedAt: 1000 });
+    Object.assign(r.players[1], { connected: false, disconnectedAt: 4000 });
+    const due = nextDeadline(r, [], 4000);
+    expect(due).toBe(4000 + IDLE_TTL);
+    // That one firing destroys the room, and a destroyed room schedules nothing.
+    expect(roomIdle(r, due!)).toBe(true);
+    expect(nextDeadline(null, [], due!)).toBeNull();
+    // An empty room is already overdue rather than waiting out another interval.
+    r.players = [];
+    expect(nextDeadline(r, [], 9000)).toBe(9000);
   });
 });
 describe('2D cube model', () => {

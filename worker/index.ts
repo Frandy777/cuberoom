@@ -7,7 +7,15 @@ import {
   type RoomState,
   type ServerMessage,
 } from '../shared/protocol';
-import { applyMessage, expiredPlayers, removePlayer, roomIdle } from './room-state';
+import {
+  JOINED_TIMEOUT,
+  UNJOINED_TIMEOUT,
+  applyMessage,
+  expiredPlayers,
+  nextDeadline,
+  removePlayer,
+  roomIdle,
+} from './room-state';
 interface Env {
   ROOMS: DurableObjectNamespace<CubeRoom>;
   ASSETS: Fetcher;
@@ -113,15 +121,35 @@ export class CubeRoom extends DurableObject<Env> {
           p.connected = false;
           p.disconnectedAt = Date.now();
         }
-      if ((await ctx.storage.getAlarm()) === null) await this.schedule();
+      // No alarm is armed here: the alarm or request that woke this object re-aims it.
     });
   }
   private save() {
     if (this.room)
       void this.ctx.storage.put<Saved>('room', { room: this.room, tokens: [...this.tokens] });
   }
-  private async schedule() {
-    await this.ctx.storage.setAlarm(Date.now() + 15_000);
+  // One pending alarm per room, aimed at its next deadline (see nextDeadline for why
+  // that chain terminates). With no deadline left the room stops scheduling altogether,
+  // and the alarm is only ever moved earlier, never pushed back to keep itself alive.
+  private async ensureAlarm() {
+    const due = nextDeadline(this.room, this.sockets.values(), Date.now());
+    const pending = await this.ctx.storage.getAlarm();
+    if (due === null) {
+      if (pending !== null) await this.ctx.storage.deleteAlarm();
+      return;
+    }
+    if (pending === null || pending > due) await this.ctx.storage.setAlarm(due);
+  }
+  // Drops sockets that went silent: a client that disappeared without a close frame
+  // holds a connection slot and leaves its player looking connected to everyone else.
+  private sweep(): boolean {
+    let changed = false;
+    for (const [ws, c] of this.sockets)
+      if (Date.now() - c.lastSeen > (c.joined ? JOINED_TIMEOUT : UNJOINED_TIMEOUT)) {
+        changed = this.disconnect(ws, false) || changed;
+        ws.close(4000, 'Heartbeat timeout');
+      }
+    return changed;
   }
   private sendRaw(ws: WebSocket, payload: string): boolean {
     try {
@@ -153,7 +181,8 @@ export class CubeRoom extends DurableObject<Env> {
     if (changed) this.commit();
   }
   async fetch(req: Request): Promise<Response> {
-    if (new URL(req.url).pathname === '/create') {
+    const path = new URL(req.url).pathname;
+    if (path === '/create') {
       if (this.room) return json({ error: 'Room already exists.' }, 409);
       const data = (await req.json()) as ReturnType<typeof createSchema.parse> & { code: string };
       const id = crypto.randomUUID(),
@@ -172,11 +201,18 @@ export class CubeRoom extends DurableObject<Env> {
       };
       this.tokens.set(token, id);
       this.save();
-      await this.schedule();
+      await this.ensureAlarm();
       return json({ code: data.code, token, playerId: id });
     }
     if (!this.room) return json({ error: 'Room not found or no longer available.' }, 404);
-    if (new URL(req.url).pathname === '/exists') return json({ exists: true });
+    if (path === '/exists') {
+      // A probe is also the cheapest chance to notice a room whose alarm was lost to a
+      // deploy or an eviction, and to re-aim it without a chain running in the meantime.
+      await this.ensureAlarm();
+      return json({ exists: true });
+    }
+    // Reclaim slots before refusing: dead sockets should not keep the room full.
+    if (this.sweep()) this.commit();
     if (this.sockets.size >= 12)
       return json({ error: 'Too many connections. Please try again later.' }, 429);
     const pair = new WebSocketPair();
@@ -187,7 +223,7 @@ export class CubeRoom extends DurableObject<Env> {
     server.addEventListener('message', (event) => this.message(server, event.data));
     server.addEventListener('close', () => this.disconnect(server));
     server.addEventListener('error', () => this.disconnect(server));
-    await this.schedule();
+    await this.ensureAlarm();
     return new Response(null, { status: 101, webSocket: client });
   }
   private message(ws: WebSocket, raw: string | ArrayBuffer) {
@@ -330,20 +366,16 @@ export class CubeRoom extends DurableObject<Env> {
     this.ctx.waitUntil(Promise.all([this.ctx.storage.deleteAlarm(), this.ctx.storage.deleteAll()]));
   }
   async alarm() {
+    // The room is already gone, so nothing can come due again: end the chain here.
     if (!this.room) return;
-    let changed = false;
-    for (const [ws, c] of this.sockets)
-      if (Date.now() - c.lastSeen > (c.joined ? 45_000 : 10_000)) {
-        changed = this.disconnect(ws, false) || changed;
-        ws.close(4000, 'Heartbeat timeout');
-      }
+    const changed = this.sweep();
     const expired = expiredPlayers(this.room, Date.now());
     for (const id of expired) this.remove(id);
     if (!this.room.players.length || roomIdle(this.room, Date.now())) {
-      this.destroy('Room ended.');
+      this.destroy('Room ended.'); // Clears the alarm with the rest of the storage.
       return;
     }
     if (changed || expired.length) this.commit();
-    await this.schedule();
+    await this.ensureAlarm();
   }
 }
