@@ -430,8 +430,8 @@ b {
 .create-card {
   min-height: 130px;
   flex: 1;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--hero);
+  color: var(--on-hero);
   border-radius: 28px;
   padding: 22px;
   display: flex;
@@ -460,8 +460,8 @@ b {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--on-accent);
-  color: var(--accent);
+  background: var(--on-hero);
+  color: var(--hero);
 }
 .home-footer {
   display: flex;
