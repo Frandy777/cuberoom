@@ -1640,18 +1640,6 @@ b {
   }
 }
 @media (min-width: 700px) {
-  .app {
-    min-height: calc(100svh - 48px);
-    margin: 24px auto;
-    padding: 20px;
-    background: var(--bg);
-    border: 1px solid var(--track);
-    border-radius: 40px;
-    box-shadow: 0 15px 60px #00000006;
-  }
-  html {
-    background: var(--track);
-  }
   .modal {
     inset: 0;
     margin: auto;
@@ -1664,12 +1652,6 @@ b {
   }
   .modal[data-closing] {
     transition-duration: 200ms;
-  }
-  .hero {
-    min-height: 300px;
-  }
-  .room-nav {
-    bottom: 45px; /* .app margin + border + padding */
   }
 }
 @media (max-width: 359px) {
@@ -2128,20 +2110,11 @@ b {
    grid; the cards stay direct children of .page, so the mobile DOM and entrances are the
    same. */
 @media (min-width: 768px) and (min-height: 600px) {
-  html {
-    background: var(--bg);
-  }
   .app {
     max-width: 1280px;
-    min-height: 100svh;
-    margin: 0 auto;
     padding: max(32px, env(safe-area-inset-top)) max(40px, env(safe-area-inset-right))
       max(32px, env(safe-area-inset-bottom)) max(40px, env(safe-area-inset-left));
     gap: 16px;
-    background: none;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
   }
   .view-home,
   .view-lobby,
