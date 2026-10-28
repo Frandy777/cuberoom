@@ -442,7 +442,8 @@ export default function App() {
           <div className="puzzle-tags">
             <span>2×2</span>
             <span>3×3</span>
-            <span>4×4</span>
+            <span>…</span>
+            <span>7×7</span>
           </div>
           <h1>
             Same scramble.

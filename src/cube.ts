@@ -45,13 +45,13 @@ export function cubeNet(event: Event, scramble: string): Record<Face, string[]> 
     })),
   );
   for (const move of scramble.trim().split(/\s+/).filter(Boolean)) {
-    const parsed = /^([URFDLB])(w)?(2|')?$/.exec(move);
+    const parsed = /^(?:(\d)(?=[URFDLB]w))?([URFDLB])(w)?(2|')?$/.exec(move);
     if (!parsed) throw new Error('Unsupported scramble move.');
-    const face = parsed[1] as Face,
+    const face = parsed[2] as Face,
       axis = normals[face].findIndex((v) => v !== 0),
       sign = normals[face][axis];
-    const width = parsed[2] ? 2 : 1;
-    const count = ((sign === 1 ? 3 : 1) * (parsed[3] === '2' ? 2 : parsed[3] === "'" ? 3 : 1)) % 4;
+    const width = parsed[1] ? Number(parsed[1]) : parsed[3] ? 2 : 1;
+    const count = ((sign === 1 ? 3 : 1) * (parsed[4] === '2' ? 2 : parsed[4] === "'" ? 3 : 1)) % 4;
     for (const s of stickers) {
       if (!(sign === 1 ? s.p[axis] >= n - width : s.p[axis] < width)) continue;
       for (let k = 0; k < count; k++) {

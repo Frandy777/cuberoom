@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export const eventSchema = z.enum(['222', '333', '444']);
+export const eventSchema = z.enum(['222', '333', '444', '555', '666', '777']);
 export const nameSchema = z
   .string()
   .trim()
@@ -88,11 +88,14 @@ export type ServerMessage =
 export const currentRound = (room: RoomState) => room.history.at(-1);
 export const roundDone = (round?: Round) =>
   !!round && round.solves.every((s) => s.status === 'done');
+// WCA notation: wide turns from 4×4, and `3Rw`-style triple-wide turns from 6×6.
+export function moveRegex(event: Event) {
+  const n = Number(event[0]);
+  const wide = n >= 6 ? '(?:3?[URFDLB]w|[URFDLB])' : n >= 4 ? '[URFDLB]w?' : '[URFDLB]';
+  return new RegExp(`^${wide}(2|')?$`);
+}
 export function validScramble(scramble: string, event: Event) {
-  const moves = scramble.trim().split(/\s+/);
-  return (
-    moves.length >= 1 &&
-    moves.length <= 100 &&
-    moves.every((m) => (event === '444' ? /^[URFDLB]w?(2|')?$/ : /^[URFDLB](2|')?$/).test(m))
-  );
+  const moves = scramble.trim().split(/\s+/),
+    move = moveRegex(event);
+  return moves.length >= 1 && moves.length <= 100 && moves.every((m) => move.test(m));
 }

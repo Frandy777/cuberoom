@@ -11,6 +11,7 @@ import {
   roomIdle,
 } from '../worker/room-state';
 import {
+  eventSchema,
   currentRound,
   messageSchema,
   roundDone,
@@ -190,6 +191,10 @@ describe('validation and statistics', () => {
     expect(validScramble('Rw U F2', '333')).toBe(false);
     expect(validScramble("Rw U F2 Rw'", '444')).toBe(true);
     expect(validScramble('<script>', '444')).toBe(false);
+    expect(validScramble("3Rw U Fw2 3Bw'", '444')).toBe(false);
+    expect(validScramble("3Rw U Fw2 3Bw'", '555')).toBe(false);
+    expect(validScramble("3Rw U Fw2 3Bw'", '777')).toBe(true);
+    expect(validScramble('3R U', '666')).toBe(false);
   });
   it('uses WCA trimmed averages with one or two DNFs', () => {
     const solves = Array.from({ length: 5 }, (_, i) => ({
@@ -269,7 +274,7 @@ describe('alarm scheduling', () => {
   });
 });
 describe('2D cube model', () => {
-  for (const event of ['222', '333', '444'] as const) {
+  for (const event of eventSchema.options) {
     it(`${event}: inverse moves and four turns restore all six faces`, () => {
       const solved = cubeNet(event, '');
       for (const move of [
@@ -279,7 +284,8 @@ describe('2D cube model', () => {
         'B',
         'L',
         'R',
-        ...(event === '444' ? ['Uw', 'Rw', 'Fw', 'Lw', 'Dw', 'Bw'] : []),
+        ...(Number(event[0]) >= 4 ? ['Uw', 'Rw', 'Fw', 'Lw', 'Dw', 'Bw'] : []),
+        ...(Number(event[0]) >= 6 ? ['3Uw', '3Rw', '3Fw', '3Lw', '3Dw', '3Bw'] : []),
       ]) {
         expect(cubeNet(event, `${move} ${move}'`)).toEqual(solved);
         expect(cubeNet(event, Array(4).fill(move).join(' '))).toEqual(solved);
@@ -304,5 +310,10 @@ describe('2D cube model', () => {
     const u = cubeNet('444', 'Rw').U;
     expect(u.filter((_, i) => i % 4 < 2)).toEqual(Array(8).fill(faceColors.U));
     expect(u.filter((_, i) => i % 4 >= 2)).toEqual(Array(8).fill(faceColors.F));
+  });
+  it('7x7 3Rw rotates exactly three layers', () => {
+    const u = cubeNet('777', '3Rw').U;
+    expect(u.filter((_, i) => i % 7 < 4)).toEqual(Array(28).fill(faceColors.U));
+    expect(u.filter((_, i) => i % 7 >= 4)).toEqual(Array(21).fill(faceColors.F));
   });
 });

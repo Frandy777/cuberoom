@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
-import type { Event, Settings } from '../../shared/protocol';
+import { eventSchema, type Settings } from '../../shared/protocol';
 import { PuzzleIcon } from './CubeNet';
 import { Thumb } from './Thumb';
 export function Setup({
@@ -29,7 +29,7 @@ export function Setup({
         <span className="header-spacer" />
       </header>
       <div className="puzzle-picker card">
-        {(['222', '333', '444'] as Event[]).map((e) => (
+        {eventSchema.options.map((e) => (
           <button
             key={e}
             onClick={() => setEvent(e)}

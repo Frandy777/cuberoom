@@ -224,7 +224,9 @@ export function Timer({
       data-accent={room.players.find((p) => p.id === playerId)?.color}
     >
       <section className={`card scramble ${finished ? 'solved' : ''}`}>
-        <p ref={scrambleRef}>{round.scramble}</p>
+        <p ref={scrambleRef} data-n={room.event[0]}>
+          {round.scramble}
+        </p>
       </section>
       <div className="preview-row">
         <section className="card net-card" ref={netRef}>
