@@ -331,6 +331,22 @@ export class CubeRoom extends DurableObject<Env> {
         this.destroy('The host ended the room. All results cleared.');
         return;
       }
+      if (msg.type === 'kick') {
+        if (room.hostId !== player.id) throw new Error('Only the host can remove players.');
+        if (msg.playerId === player.id) throw new Error('Use Leave room to leave.');
+        if (!room.players.some((p) => p.id === msg.playerId))
+          throw new Error('That player has already left.');
+        // Revoking the token keeps a reconnect from slipping the player back in.
+        this.remove(msg.playerId);
+        for (const [other, state] of this.sockets)
+          if (state.id === msg.playerId) {
+            this.sockets.delete(other);
+            this.send(other, { type: 'ended', reason: 'The host removed you from the room.' });
+            other.close(4005, 'Removed');
+          }
+        this.commit();
+        return;
+      }
       if (applyMessage(room, player, msg)) this.commit();
       else this.send(ws, { type: 'state', room });
     } catch (error) {

@@ -179,6 +179,33 @@ describe.skipIf(!base)('real Workers + Durable Object protocol', () => {
     const deleted = await fetch(`${base}/api/rooms/${session.code}`);
     expect(deleted.status).toBe(404);
   });
+  it('lets only the host remove a player, revoking their session', async () => {
+    const session = await create();
+    const host = await new Client(session.code, 'Host', session.token).ready();
+    const guest = await new Client(session.code, 'Guest').ready(),
+      other = await new Client(session.code, 'Other').ready();
+    await host.until(() => host.room?.players.length === 3);
+    expect(await other.errorFor({ type: 'kick', playerId: guest.session!.playerId })).toMatchObject(
+      { message: expect.stringContaining('host') },
+    );
+    expect(await host.errorFor({ type: 'kick', playerId: session.playerId })).toMatchObject({
+      message: expect.stringContaining('Leave'),
+    });
+    host.send({ type: 'next', round: 0, scramble: 'R U' });
+    await guest.until(() => guest.room?.history.length === 1);
+    host.send({ type: 'kick', playerId: guest.session!.playerId });
+    await guest.until(() => guest.closeCode === 4005);
+    expect(guest.messages).toContainEqual(
+      expect.objectContaining({ type: 'ended', reason: expect.stringContaining('removed') }),
+    );
+    await other.until(() => other.room?.players.length === 2);
+    expect(other.room!.history[0].solves[1].penalty).toBe('DNF');
+    const stale = new Client(session.code, 'Guest', guest.session!.token);
+    await stale.until(() => stale.messages.some((m) => m.type === 'error'));
+    expect(stale.session).toBeUndefined();
+    host.send({ type: 'end' });
+    await host.until(() => host.messages.some((m) => m.type === 'ended'));
+  });
   it('closes oversized and flooding connections', async () => {
     const session = await create();
     const host = await new Client(session.code, 'Host', session.token).ready();

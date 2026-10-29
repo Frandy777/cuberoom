@@ -27,6 +27,7 @@ import {
   Swords,
   Timer as TimerIcon,
   Trophy,
+  UserMinus,
   UserPen,
   UserRound,
   WifiOff,
@@ -201,6 +202,7 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState<'leave' | 'end' | 'restart' | null>(null);
+  const [kickId, setKickId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const [editProfile, setEditProfile] = useState(false);
   const [qr, setQr] = useState(false);
@@ -217,6 +219,8 @@ export default function App() {
   roomRef.current = room;
   const round = room ? currentRound(room) : undefined;
   const host = room?.hostId === session?.playerId;
+  // Derived from the room so the dialog closes itself if that player leaves first.
+  const kickTarget = host ? room?.players.find((p) => p.id === kickId) : undefined;
   const allDone = roundDone(round);
   const connected = status === 'connected';
   const canAdvance = host && connected && !busy && !!room && room.players.every((p) => p.connected);
@@ -554,10 +558,21 @@ export default function App() {
             <div key={p.id} className={`seat color-${p.color}`}>
               <div className="section-heading">
                 <span className="avatar inverse">{p.name[0]}</span>
-                {p.id === room.hostId && (
+                {p.id === room.hostId ? (
                   <span className="avatar inverse" title="host">
                     <Crown size={22} />
                   </span>
+                ) : (
+                  host && (
+                    <button
+                      className="avatar inverse"
+                      aria-label={`Remove ${p.name}`}
+                      disabled={!connected}
+                      onClick={() => setKickId(p.id)}
+                    >
+                      <X size={22} />
+                    </button>
+                  )
                 )}
               </div>
               <div>
@@ -622,7 +637,9 @@ export default function App() {
           connected={connected}
           send={send}
           visible={timerShown}
-          active={timerShown && !menu && !confirm && !editProfile && !qr && !needRefresh}
+          active={
+            timerShown && !menu && !confirm && !kickTarget && !editProfile && !qr && !needRefresh
+          }
         />
         {(split || tab !== 'timer') && (
           <Stats
@@ -790,6 +807,23 @@ export default function App() {
               <LogOut size={22} />
               <b>Leave room</b>
             </button>
+            {host &&
+              room.phase !== 'lobby' &&
+              room.players
+                .filter((p) => p.id !== session?.playerId)
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    className="menu-item"
+                    onClick={() => {
+                      setMenu(false);
+                      setKickId(p.id);
+                    }}
+                  >
+                    <UserMinus size={22} />
+                    <b>Remove {p.name}</b>
+                  </button>
+                ))}
             {host && room.phase === 'finished' && (
               <button
                 className="menu-item"
@@ -854,6 +888,30 @@ export default function App() {
             </button>
             <button className="secondary" onClick={() => setConfirm(null)}>
               {confirm === 'restart' ? 'Cancel' : 'Keep playing'}
+            </button>
+          </Modal>
+        )}
+      </Presence>
+      <Presence>
+        {kickTarget && (
+          <Modal title={`Remove ${kickTarget.name}?`} onClose={() => setKickId(null)}>
+            <p>
+              {room?.phase === 'playing'
+                ? 'They will leave the room. An unfinished solve will be marked DNF.'
+                : 'They will leave the room.'}
+            </p>
+            <button
+              className="danger-button"
+              disabled={!connected}
+              onClick={() => {
+                send({ type: 'kick', playerId: kickTarget.id });
+                setKickId(null);
+              }}
+            >
+              Remove
+            </button>
+            <button className="secondary" onClick={() => setKickId(null)}>
+              Cancel
             </button>
           </Modal>
         )}

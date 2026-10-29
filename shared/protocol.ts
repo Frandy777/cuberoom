@@ -40,6 +40,7 @@ export const messageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('settings'), ...settingsSchema.shape }),
   z.object({ type: z.literal('leave') }),
   z.object({ type: z.literal('end') }),
+  z.object({ type: z.literal('kick'), playerId: z.string().uuid() }),
   z.object({ type: z.literal('restart') }),
   z.object({ type: z.literal('ping') }),
 ]);
